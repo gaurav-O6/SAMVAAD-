@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAMVAAD | Choose Mode</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #000000, #203a43, #000000);
+    color: white;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+header {
+    padding: 20px 60px;
+    animation: fadeIn 0.8s ease-out;
+}
+
+header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: transform 0.3s;
+    display: inline-block;
+}
+
+
+header h1:hover {
+    transform: scale(1.05);
+}
+
+header span {
+    color: #00ffcc;
+}
+
+/* Main content */
+main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.card-container {
+    display: flex;
+    gap: 50px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: stretch;
+}
+
+.card {
+    width: 320px;
+    height: 420px;
+    background: rgba(24, 10, 10, 0.08);
+    backdrop-filter: blur(14px);
+    border-radius: 24px;
+    padding: 20px 30px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    transition: 0.35s ease, transform 0.3s;
+    animation: fadeInUp 1s ease-out;
+}
+
+.card:hover {
+    transform: translateY(-10px) scale(1.03);
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 12px 25px rgba(0, 255, 204, 0.3);
+}
+
+.visual {
+    height: 120px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.sign-visual img,
+.braille-visual img,
+.learn-visual img {
+    width: 120px;
+    height: auto;
+}
+
+.card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+}
+
+.card h2 {
+    font-size: 22px;
+}
+
+.card p {
+    font-size: 14px;
+    opacity: 0.85;
+    line-height: 1.5;
+}
+
+.card button {
+    padding: 12px 26px;
+    border-radius: 25px;
+    border: none;
+    background: #00ffcc;
+    color: #000;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 15px;
+}
+
+.card button:hover {
+    background: #00ddb3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,255,204,0.4);
+}
+
+footer {
+    text-align: center;
+    padding: 20px 15px;
+    font-size: 12px;
+    opacity: 0.7;
+    line-height: 1.6;
+}
+
+footer strong {
+    color: #00ffcc;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 900px) {
+    .card {
+        width: 95%;
+    }
+}
+</style>
+</head>
+<body>
+
+<header>
+    <h1 onclick="window.location.href='index.html'">
+        <span>SAM</span>VAAD
+    </h1>
+</header>
+
+<main>
+<div class="card-container">
+
+    <!-- SIGN LANGUAGE -->
+    <div class="card">
+        <div class="visual sign-visual">
+            <img src="images/sign.png" alt="Sign">
+        </div>
+        <div class="card-content">
+            <h2>Sign</h2>
+            <p>Use your camera to translate hand signs into text and voice in real time.</p>
+            <a href="sign.html"><button>Open Sign Mode</button></a>
+        </div>
+    </div>
+
+    <!-- BRAILLE -->
+    <div class="card">
+        <div class="visual braille-visual">
+            <img src="images/braille.png" alt="Braille">
+        </div>
+        <div class="card-content">
+            <h2>Braille</h2>
+            <p>Convert text to braille and recognize braille characters from images.</p>
+            <a href="braille.html"><button>Open Braille Mode</button></a>
+        </div>
+    </div>
+
+    <!-- LEARN -->
+    <div class="card">
+        <div class="visual learn-visual">
+            <img src="images/learn.png" alt="Learn">
+        </div>
+        <div class="card-content">
+            <h2>Learn</h2>
+            <p>Learn the fundamentals of sign language and braille.</p>
+            <a href="learn.html"><button>Start Learning</button></a>
+        </div>
+    </div>
+
+</div>
+</main>
+
+<footer>
+    <strong>SAMVAAD</strong> — Sign and Multimodal Voice Assistive Access & Dialogue<br>
+    © 2026 Final Year Engineering Project
+</footer>
+
+</body>
+</html>

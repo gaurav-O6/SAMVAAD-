@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAMVAAD | Learn Mode</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
+
+body {
+    min-height:100vh;
+    background: linear-gradient(135deg, #000000, #203a43, #000000);
+    color:white;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding-bottom:40px;
+}
+
+/* HEADER */
+header {
+    width: 100%;
+    padding: 20px 60px;
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    animation: fadeIn 0.8s ease-out;
+}
+
+header h1 { 
+    font-size:28px; 
+    font-weight:600; 
+    cursor:pointer;
+    transition: transform 0.3s;
+}
+header h1:hover {
+    transform: scale(1.05);
+}
+header span { color:#00ffcc; }
+
+/* BACK BUTTON */
+#back-btn {
+    padding: 6px 20px;
+    border-radius: 30px;
+    border: none;
+    font-size: 22px;
+    font-weight: 600;
+    cursor: pointer;
+    background: #00ffcc;
+    color: #000;
+    transition: all 0.3s;
+}
+#back-btn:hover {
+    background: #00ddb3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,255,204,0.4);
+}
+
+/* RESET BUTTON (appears when in learning mode) */
+#reset-btn {
+    display: none;
+    padding: 8px 24px;
+    border-radius: 30px;
+    border: 2px solid #00ffcc;
+    background: transparent;
+    color: #00ffcc;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+#reset-btn:hover {
+    background: #00ffcc;
+    color: #000;
+}
+
+/* SUBTITLE */
+#subtitle {
+    margin: 10px 0 20px;
+    font-size:18px;
+    color: #aaa;
+    text-align:center;
+    animation: fadeInUp 1s ease-out;
+}
+
+/* MODE CARDS */
+#mode-selection {
+    display:flex;
+    gap:40px;
+    margin:40px 0;
+    flex-wrap: wrap;
+    justify-content:center;
+    width: 90%;
+}
+
+.mode-wrapper{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    cursor:pointer;
+    animation: fadeInUp 1.2s ease-out;
+}
+
+.mode-card {
+    width:240px;
+    height:180px;
+    background: rgba(24, 10, 10, 0.08);
+    border: 2px solid #00ffcc;
+    border-radius:20px;
+    overflow:hidden;
+    transition:0.3s;
+    box-shadow: 0 0 20px rgba(0,255,204,0.2);
+}
+.mode-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(0,255,204,0.6);
+}
+
+.mode-card img {
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.mode-wrapper span {
+    font-size:18px;
+    font-weight:600;
+}
+
+/* ===== MEET THE CREATORS ===== */
+#creators {
+    width: 90%;
+    max-width: 1200px;
+    margin: 30px 0;
+    text-align: center;
+    animation: fadeInUp 1.4s ease-out;
+}
+#creators h2 { color:#00ffcc; margin-bottom: 20px; font-size:26px; }
+
+.creator-grid {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.creator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.creator img {
+    width: 100px;
+    height: 140px;
+    border-radius: 15px;
+    border: 3px solid #00ffcc;
+    object-fit: cover;
+    transition: 0.3s;
+}
+
+.creator span { margin-top: 10px; font-weight: 600; }
+
+.creator:hover {
+    transform: translateY(-5px) scale(1.05);
+}
+
+.creator:hover img {
+    box-shadow: 0 0 20px rgba(0,255,204,0.6);
+}
+
+/* SECTIONS */
+.section {
+    width: 90%;
+    max-width: 1200px;
+    margin: 40px 0;
+    animation: fadeInUp 1s ease-out;
+}
+.section h2 {
+    margin-bottom: 20px;
+    color:#00ffcc;
+    font-size:26px;
+    text-align:center;
+}
+
+/* GRID DISPLAY */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 25px;
+    justify-items: center;
+}
+
+.grid-item {
+    width: 140px;
+    background: rgba(255,255,255,0.05);
+    border: 2px solid #00ffcc;
+    border-radius: 25px;
+    padding: 15px;
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.grid-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,255,204,0.4);
+    background: rgba(255,255,255,0.1);
+}
+
+.grid-item img {
+    max-width: 80px;
+    max-height: 80px;
+    margin-bottom: 10px;
+    object-fit: contain;
+}
+.grid-item span {
+    font-size:16px;
+    font-weight:500;
+}
+
+/* FOOTER */
+footer {
+    text-align:center;
+    padding:20px;
+    font-size:12px;
+    opacity:0.7;
+    line-height: 1.6;
+}
+
+footer strong {
+    color: #00ffcc;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .grid {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 15px;
+    }
+    
+    .grid-item {
+        width: 120px;
+    }
+    
+    .mode-card {
+        width: 200px;
+        height: 150px;
+    }
+    
+    .creator-grid {
+        gap: 25px;
+    }
+}
+</style>
+</head>
+<body>
+
+<header>
+    <h1 onclick="window.location.href='index.html'"><span>SAM</span>VAAD</h1>
+    <div style="display: flex; gap: 10px;">
+        <button id="reset-btn" onclick="resetMode()">↻ Change Mode</button>
+        <button id="back-btn" onclick="window.location.href='options.html'">←</button>
+    </div>
+</header>
+
+<div id="subtitle">Choose what you want to learn</div>
+
+<!-- Mode Cards -->
+<div id="mode-selection">
+    <div class="mode-wrapper" onclick="setMode('sign')">
+        <div class="mode-card">
+            <img src="images/sign_icon.png" alt="Sign Language">
+        </div>
+        <span>Learn Sign Language</span>
+    </div>
+
+    <div class="mode-wrapper" onclick="setMode('braille')">
+        <div class="mode-card">
+            <img src="images/braille_icon.png" alt="Braille">
+        </div>
+        <span>Learn Braille</span>
+    </div>
+</div>
+
+<!-- Meet the Creators -->
+<div id="creators">
+    <h2>Meet the Creators</h2>
+    <div class="creator-grid">
+        <div class="creator" onclick="window.location.href='gaurav.html'">
+            <img src="images/gaurav.png" alt="Gaurav"><span>Gaurav</span>
+        </div>
+        <div class="creator" onclick="window.location.href='priyanka.html'">
+            <img src="images/priyanka.png" alt="Priyanka"><span>Priyanka</span>
+        </div>
+        <div class="creator" onclick="window.location.href='krushnal.html'">
+            <img src="images/krushnal.png" alt="Krushnal"><span>Krushnal</span>
+        </div>
+        <div class="creator" onclick="window.location.href='shreya.html'">
+            <img src="images/shreya.png" alt="Shreya"><span>Shreya</span>
+        </div>
+    </div>
+</div>
+
+<!-- Learning Content -->
+<div id="learning-content"></div>
+
+<footer>
+    <strong>SAMVAAD</strong> — Sign and Multimodal Voice Assistive Access & Dialogue<br>
+    © 2026 Final Year Engineering Project
+</footer>
+
+<script>
+const data = {
+    sign: {
+        alphabets: Array.from({length:26}, (_,i)=>({
+            label:String.fromCharCode(65+i), 
+            img:`images/sign_${String.fromCharCode(65+i)}.gif`
+        })),
+        numbers: Array.from({length:10}, (_,i)=>({
+            label:i.toString(), 
+            img:`images/sign_${i}.gif`
+        })),
+        common: [
+            {label:'Thank You', img:'images/sign_thankyou.gif'},
+            {label:'Sorry', img:'images/sign_sorry.gif'},
+            {label:'Welcome', img:'images/sign_welcome.gif'},
+            {label:'I Love You', img:'images/sign_iloveyou.gif'} // FIXED: was braille_iloveyou.png
+        ]
+    },
+    braille: {
+        alphabets: Array.from({length:26}, (_,i)=>({
+            label:String.fromCharCode(65+i), 
+            img:`images/braille_${String.fromCharCode(65+i)}.png`
+        })),
+        numbers: Array.from({length:10}, (_,i)=>({
+            label:i.toString(), 
+            img:`images/braille_${i}.png`
+        })),
+        common: [
+            {label:'Thank You', img:'images/braille_thankyou.png'},
+            {label:'Sorry', img:'images/braille_sorry.png'},
+            {label:'Welcome', img:'images/braille_welcome.png'},
+            {label:'I Love You', img:'images/braille_iloveyou.png'}
+        ]
+    }
+};
+
+let mode = null;
+
+function setMode(selectedMode){
+    mode = selectedMode;
+    document.getElementById('mode-selection').style.display = 'none';
+    document.getElementById('subtitle').style.display = 'none';
+    document.getElementById('creators').style.display = 'none';
+    document.getElementById('reset-btn').style.display = 'block';
+    renderContent();
+}
+
+function resetMode() {
+    mode = null;
+    document.getElementById('mode-selection').style.display = 'flex';
+    document.getElementById('subtitle').style.display = 'block';
+    document.getElementById('creators').style.display = 'block';
+    document.getElementById('reset-btn').style.display = 'none';
+    document.getElementById('learning-content').innerHTML = '';
+}
+
+function renderContent(){
+    if(!mode) return;
+    const container = document.getElementById('learning-content');
+    container.innerHTML = '';
+
+    const sections = ['alphabets','numbers','common'];
+    const titles = {
+        alphabets:'Alphabets', 
+        numbers:'Numbers', 
+        common:'Common Gestures/Words'
+    };
+
+    sections.forEach(section=>{
+        const secDiv = document.createElement('div');
+        secDiv.className = 'section';
+
+        const h2 = document.createElement('h2');
+        h2.textContent = titles[section];
+        secDiv.appendChild(h2);
+
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+
+        data[mode][section].forEach(item=>{
+            const box = document.createElement('div');
+            box.className = 'grid-item';
+
+            const img = document.createElement('img');
+            img.src = item.img;
+            img.alt = item.label;
+            img.onerror = function() {
+                // Fallback if image doesn't exist
+                this.style.display = 'none';
+                const placeholder = document.createElement('div');
+                placeholder.textContent = '?';
+                placeholder.style.fontSize = '48px';
+                placeholder.style.color = '#666';
+                box.insertBefore(placeholder, label);
+            };
+
+            const label = document.createElement('span');
+            label.textContent = item.label;
+
+            box.appendChild(img);
+            box.appendChild(label);
+            grid.appendChild(box);
+        });
+
+        secDiv.appendChild(grid);
+        container.appendChild(secDiv);
+    });
+}
+</script>
+
+</body>
+</html>
