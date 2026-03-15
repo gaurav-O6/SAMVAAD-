@@ -69,7 +69,7 @@ SAMVAAD
 └── README.md
 How to Run the Project
 1 Clone the repository
-git clone https://github.com/YOUR_USERNAME/SAMVAAD.git
+git clone https://github.com/gaurav-O6/SAMVAAD-
 2 Navigate to the project
 cd SAMVAAD
 3 Install dependencies
