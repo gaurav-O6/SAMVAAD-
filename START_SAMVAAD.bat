@@ -1,14 +1,15 @@
 @echo off
-title SAMVAAD Server
+title SAMVAAD Launcher
 color 0A
 set "ROOT_DIR=%~dp0"
 set "TEMPLATES_DIR=%ROOT_DIR%templates"
 set "VENV_ACTIVATE=%ROOT_DIR%venv\Scripts\activate.bat"
+set "SAMVAAD_URL=http://localhost:5000"
 
 echo.
 echo  =====================================================
-echo    SAMVAAD Backend Starting...
-echo    Keep this window open while using the site!
+echo    SAMVAAD One-Click Launch
+echo    Starting backend and opening browser...
 echo  =====================================================
 echo.
 
@@ -29,12 +30,16 @@ if not exist "%VENV_ACTIVATE%" (
     exit /b 1
 )
 
-:: Activate virtual environment and start the server
-cd /d "%TEMPLATES_DIR%"
-call "%VENV_ACTIVATE%"
-python app.py
+:: Start backend in a separate window so this launcher can continue
+start "SAMVAAD Server" cmd /k "cd /d ""%TEMPLATES_DIR%"" && call ""%VENV_ACTIVATE%"" && python app.py"
 
-:: If server crashes, show error and wait
+:: Give Flask a moment to come up, then open the browser
+timeout /t 3 /nobreak >nul
+start "" "%SAMVAAD_URL%"
+
+echo  SAMVAAD should now open in your browser:
+echo    %SAMVAAD_URL%
 echo.
-echo  Server stopped. Press any key to close...
+echo  If the page does not load immediately, wait a few seconds and refresh once.
+echo.
 pause
