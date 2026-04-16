@@ -17,11 +17,10 @@ body {
     flex-direction:column;
 }
 
-/* HEADER */
-header { 
-    padding:20px 60px; 
-    display:flex; 
-    align-items:center; 
+header {
+    padding:20px 60px;
+    display:flex;
+    align-items:center;
     justify-content:space-between;
     animation: fadeIn 0.8s ease-out;
 }
@@ -31,14 +30,9 @@ header h1 {
     cursor:pointer;
     transition: transform 0.3s;
 }
-
-header h1:hover {
-    transform: scale(1.05);
-}
-
+header h1:hover { transform: scale(1.05); }
 header span { color:#00ffcc; }
 
-/* BACK BUTTON */
 #back-btn {
     position:absolute;
     top:25px;
@@ -53,14 +47,12 @@ header span { color:#00ffcc; }
     z-index:10;
     transition: all 0.3s;
 }
-
 #back-btn:hover {
     background:#00ddb3;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,255,204,0.4);
 }
 
-/* MAIN DISPLAY */
 #main-display {
     flex:1;
     margin:30px auto;
@@ -77,7 +69,6 @@ header span { color:#00ffcc; }
     animation: fadeInUp 1s ease-out;
 }
 
-/* TEXT LAYER */
 #braille-wrapper {
     position:absolute;
     inset:0;
@@ -94,7 +85,6 @@ header span { color:#00ffcc; }
     letter-spacing: 0.15em;
 }
 
-/* IMAGE LAYER */
 #image-preview {
     position:absolute;
     inset:0;
@@ -106,7 +96,6 @@ header span { color:#00ffcc; }
     display:none;
 }
 
-/* LOADING SPINNER */
 #loading-spinner {
     position:absolute;
     top:50%;
@@ -115,7 +104,6 @@ header span { color:#00ffcc; }
     display:none;
     z-index:5;
 }
-
 .spinner {
     border: 4px solid rgba(0,255,204,0.1);
     border-top: 4px solid #00ffcc;
@@ -124,13 +112,8 @@ header span { color:#00ffcc; }
     height: 50px;
     animation: spin 1s linear infinite;
 }
+@keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Scrollbar */
 #braille-wrapper::-webkit-scrollbar { width:4px; }
 #braille-wrapper::-webkit-scrollbar-thumb {
     background: rgba(255,255,255,0.12);
@@ -140,7 +123,6 @@ header span { color:#00ffcc; }
     background: rgba(255,255,255,0.25);
 }
 
-/* STATUS MESSAGE - UNIFIED POSITION */
 #status-msg {
     text-align:center;
     margin:15px auto 10px;
@@ -151,7 +133,57 @@ header span { color:#00ffcc; }
     max-width:550px;
 }
 
-/* INPUT BAR */
+#recognition-meta {
+    width:90%;
+    max-width:550px;
+    margin:0 auto 14px;
+    padding:12px 14px;
+    border:1px solid rgba(0,255,204,0.2);
+    border-radius:16px;
+    background: rgba(255,255,255,0.05);
+    color:#d7fff7;
+    display:none;
+    animation: fadeIn 0.35s ease-out;
+}
+
+#recognition-meta.visible {
+    display:block;
+}
+
+#recognition-meta strong {
+    color:#00ffcc;
+    font-size:13px;
+    display:block;
+    margin-bottom:8px;
+}
+
+.meta-grid {
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap:10px 14px;
+}
+
+.meta-item {
+    background: rgba(0,0,0,0.18);
+    border-radius:12px;
+    padding:10px 12px;
+}
+
+.meta-label {
+    display:block;
+    font-size:11px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:rgba(255,255,255,0.68);
+    margin-bottom:4px;
+}
+
+.meta-value {
+    display:block;
+    font-size:15px;
+    color:white;
+}
+
 #input-bar {
     display:flex;
     align-items:center;
@@ -162,7 +194,6 @@ header span { color:#00ffcc; }
     width:90%;
     max-width:550px;
 }
-
 #input-bar input[type="text"] {
     padding:12px 16px;
     border-radius:25px;
@@ -171,41 +202,51 @@ header span { color:#00ffcc; }
     font-size:16px;
 }
 
-/* ICON BUTTONS */
+/* ── Professional SVG icon buttons ── */
 .icon-btn {
-    background:#00ffcc;
-    border:none;
-    color:#000;
-    padding:12px;
-    border-radius:50%;
-    font-size:18px;
-    cursor:pointer;
-    transition: all 0.3s;
+    background: rgba(0,255,204,0.07);
+    border: 1.5px solid rgba(0,255,204,0.3);
+    color: #00ffcc;
+    padding: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    width: 46px;
+    height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    outline: none;
 }
-
+.icon-btn svg {
+    width: 20px; height: 20px; display: block;
+    stroke: #00ffcc; fill: none;
+    stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round;
+    transition: stroke 0.2s;
+}
 .icon-btn:hover {
-    background:#00ddb3;
-    transform: scale(1.1);
+    background: rgba(0,255,204,0.16);
+    border-color: #00ffcc;
+    box-shadow: 0 0 14px rgba(0,255,204,0.3);
+    transform: translateY(-2px);
 }
+.icon-btn:hover svg { stroke: #fff; }
 
-/* MIC ACTIVE */
+/* Mic active state */
 .mic-active {
-    background:#ff4d4d !important;
-    box-shadow:0 0 15px rgba(255,77,77,0.8);
-    animation:pulse 1.2s infinite;
+    background: rgba(255,77,77,0.18) !important;
+    border-color: #ff4d4d !important;
+    box-shadow: 0 0 15px rgba(255,77,77,0.55) !important;
+    animation: pulse 1.2s infinite;
 }
+.mic-active svg { stroke: #ff4d4d !important; }
+@keyframes pulse { 0%{transform:scale(1)} 50%{transform:scale(1.1)} 100%{transform:scale(1)} }
 
-@keyframes pulse { 
-    0%{transform:scale(1)} 
-    50%{transform:scale(1.1)} 
-    100%{transform:scale(1)} 
-}
-
-/* ACTION BUTTONS */
-.controls { 
-    display:flex; 
-    justify-content:center; 
-    gap:20px; 
+.controls {
+    display:flex;
+    justify-content:center;
+    gap:20px;
     margin:0 auto 15px;
     flex-wrap:wrap;
     width:90%;
@@ -222,66 +263,35 @@ header span { color:#00ffcc; }
     cursor:pointer;
     transition: all 0.3s;
 }
-
 .action:hover {
     background:#00ddb3;
     transform: translateY(-2px);
     box-shadow: 0 0 15px rgba(0,255,204,0.5);
 }
-
 .action:disabled {
     background:#555;
     cursor:not-allowed;
     opacity:0.5;
 }
 
-/* FOOTER */
-footer { 
-    text-align:center; 
-    padding:20px 15px; 
-    font-size:12px; 
+footer {
+    text-align:center;
+    padding:20px 15px;
+    font-size:12px;
     opacity:0.7;
     line-height: 1.6;
 }
+footer strong { color: #00ffcc; }
 
-footer strong {
-    color: #00ffcc;
-}
+@keyframes fadeIn   { from{opacity:0} to{opacity:1} }
+@keyframes fadeInUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
 
-/* Animations */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Mobile responsiveness */
 @media (max-width: 600px) {
-    header {
-        padding: 20px 30px;
-    }
-    
-    #back-btn {
-        right: 20px;
-    }
-    
-    #main-display {
-        height: 280px;
-    }
-    
-    #input-bar input[type="text"] {
-        width: 200px;
-    }
+    header { padding: 20px 30px; }
+    #back-btn { right: 20px; }
+    #main-display { height: 280px; }
+    #input-bar input[type="text"] { width: 200px; }
+    .meta-grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -304,19 +314,64 @@ footer strong {
     </div>
 </main>
 
-<!-- STATUS MESSAGE -->
 <div id="status-msg"></div>
 
-<!-- INPUT BAR -->
+<div id="recognition-meta" aria-live="polite">
+    <strong>Recognition Summary</strong>
+    <div class="meta-grid">
+        <div class="meta-item">
+            <span class="meta-label">Confidence</span>
+            <span class="meta-value" id="meta-confidence">-</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Detected Dots</span>
+            <span class="meta-value" id="meta-dots">-</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Detected Cells</span>
+            <span class="meta-value" id="meta-cells">-</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Unknown Cells</span>
+            <span class="meta-value" id="meta-unknown">-</span>
+        </div>
+    </div>
+</div>
+
 <div id="input-bar">
-    <button id="mic-btn" class="icon-btn" title="Voice input">🎤</button>
+    <!-- Microphone -->
+    <button id="mic-btn" class="icon-btn" title="Voice input">
+        <svg viewBox="0 0 24 24">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+    </button>
+
     <input id="text-input" type="text" placeholder="Type or speak text...">
-    <button class="icon-btn" onclick="speak(textInput.value)" title="Speak text">🔊</button>
-    <button class="icon-btn" onclick="uploadImage()" title="Upload Braille image">📤</button>
+
+    <!-- Speaker -->
+    <button class="icon-btn" onclick="speak(textInput.value)" title="Speak text">
+        <svg viewBox="0 0 24 24">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+    </button>
+
+    <!-- Upload image -->
+    <button class="icon-btn" onclick="uploadImage()" title="Upload Braille image">
+        <svg viewBox="0 0 24 24">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+        </svg>
+    </button>
+
     <input type="file" id="image-input" accept="image/*" hidden>
 </div>
 
-<!-- ACTION BUTTONS -->
 <div class="controls">
     <button class="action" onclick="convertText()">Convert</button>
     <button class="action" id="analyze-btn" onclick="analyzeImage()" disabled>Analyze Image</button>
@@ -324,26 +379,31 @@ footer strong {
 </div>
 
 <footer>
-    <strong>SAMVAAD</strong> — Sign and Multimodal Voice Assistive Access & Dialogue<br>
+    <strong>SAMVAAD</strong> — Sign and Multimodal Voice Assistive Access &amp; Dialogue<br>
     © 2026 Final Year Engineering Project
 </footer>
 
 <script>
-const textInput = document.getElementById("text-input");
+const textInput      = document.getElementById("text-input");
 const brailleDisplay = document.getElementById("braille-display");
-const imageInput = document.getElementById("image-input");
-const imagePreview = document.getElementById("image-preview");
-const micBtn = document.getElementById("mic-btn");
-const analyzeBtn = document.getElementById("analyze-btn");
+const imageInput     = document.getElementById("image-input");
+const imagePreview   = document.getElementById("image-preview");
+const micBtn         = document.getElementById("mic-btn");
+const analyzeBtn     = document.getElementById("analyze-btn");
 const loadingSpinner = document.getElementById("loading-spinner");
-const statusMsg = document.getElementById("status-msg");
+const statusMsg      = document.getElementById("status-msg");
+const recognitionMeta = document.getElementById("recognition-meta");
+const metaConfidence = document.getElementById("meta-confidence");
+const metaDots = document.getElementById("meta-dots");
+const metaCells = document.getElementById("meta-cells");
+const metaUnknown = document.getElementById("meta-unknown");
 
 /* BRAILLE MAP */
 const map = {
     'A':'⠁','B':'⠃','C':'⠉','D':'⠙','E':'⠑','F':'⠋','G':'⠛','H':'⠓','I':'⠊','J':'⠚',
     'K':'⠅','L':'⠇','M':'⠍','N':'⠝','O':'⠕','P':'⠏','Q':'⠟','R':'⠗','S':'⠎','T':'⠞',
     'U':'⠥','V':'⠧','W':'⠺','X':'⠭','Y':'⠽','Z':'⠵',
-    ' ':'⠀',  
+    ' ':'⠀',
     '1':'⠼⠁','2':'⠼⠃','3':'⠼⠉','4':'⠼⠙','5':'⠼⠑',
     '6':'⠼⠋','7':'⠼⠛','8':'⠼⠓','9':'⠼⠊','0':'⠼⠚',
     '.':'⠲',',':'⠂','?':'⠦','!':'⠖','-':'⠤'
@@ -358,13 +418,28 @@ brailleToEnglishMap['⠀'] = ' ';
 
 function showStatus(message, type) {
     statusMsg.textContent = message;
-    statusMsg.style.color = type === "error" ? "#ff4d4d" : 
-                           type === "success" ? "#00ffcc" : 
-                           "#aaa";
-    
+    statusMsg.style.color = type === "error"   ? "#ff4d4d"
+                          : type === "success" ? "#00ffcc"
+                          : "#aaa";
     if (type !== "error" && message) {
         setTimeout(() => statusMsg.textContent = "", 5000);
     }
+}
+
+function hideRecognitionMeta() {
+    recognitionMeta.classList.remove("visible");
+}
+
+function updateRecognitionMeta(data) {
+    if (!data || typeof data.confidence !== 'number' || !data.meta) {
+        hideRecognitionMeta();
+        return;
+    }
+    metaConfidence.textContent = `${Math.round(data.confidence * 100)}%`;
+    metaDots.textContent = `${data.meta.dots_count ?? '-'}`;
+    metaCells.textContent = `${data.meta.cells_count ?? '-'}`;
+    metaUnknown.textContent = `${data.meta.unknown_cells ?? '-'}`;
+    recognitionMeta.classList.add("visible");
 }
 
 function speak(text) {
@@ -378,13 +453,10 @@ function speak(text) {
 
 function convertText() {
     const input = textInput.value.trim();
-    if (!input) {
-        showStatus("Please enter some text", "error");
-        return;
-    }
-    
-    let output = '';
+    if (!input) { showStatus("Please enter some text", "error"); return; }
 
+    let output = '';
+    hideRecognitionMeta();
     if (/[\u2800-\u28FF]/.test(input)) {
         for (let i = 0; i < input.length; i++) {
             if (input[i] === '⠼' && i + 1 < input.length) {
@@ -401,9 +473,7 @@ function convertText() {
         }
         showStatus("Braille converted to English", "success");
     } else {
-        output = input.toUpperCase().split('')
-            .map(c => map[c] || c)
-            .join('');
+        output = input.toUpperCase().split('').map(c => map[c] || c).join('');
         showStatus("English converted to Braille", "success");
     }
 
@@ -418,73 +488,61 @@ function clearText() {
     imagePreview.src = "";
     analyzeBtn.disabled = true;
     statusMsg.textContent = "";
+    hideRecognitionMeta();
 }
 
-function uploadImage() {
-    imageInput.click();
-}
+function uploadImage() { imageInput.click(); }
 
 imageInput.onchange = e => {
     const file = e.target.files[0];
     if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-        showStatus("Please upload an image file", "error");
-        return;
-    }
-
+    if (!file.type.startsWith('image/')) { showStatus("Please upload an image file", "error"); return; }
     const reader = new FileReader();
     reader.onload = () => {
         imagePreview.src = reader.result;
         imagePreview.style.display = "block";
         brailleDisplay.textContent = "";
         analyzeBtn.disabled = false;
+        hideRecognitionMeta();
         showStatus("Image uploaded — click 'Analyze Image' to recognize", "success");
     };
     reader.readAsDataURL(file);
 };
 
 async function analyzeImage() {
-    if (!imagePreview.src) {
-        showStatus("Upload an image first", "error");
-        return;
-    }
-
+    if (!imagePreview.src) { showStatus("Upload an image first", "error"); return; }
     loadingSpinner.style.display = "block";
     analyzeBtn.disabled = true;
     showStatus("Analyzing Braille image...", "info");
-
     try {
         const blob = await fetch(imagePreview.src).then(r => r.blob());
         const formData = new FormData();
         formData.append('image', blob, 'braille.png');
-
         const response = await fetch('http://localhost:5000/api/recognize-braille', {
-            method: 'POST',
-            body: formData
+            method: 'POST', body: formData
         });
-
-        if (!response.ok) {
-            throw new Error(`Server error: ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`Server error: ${response.status}`);
         const data = await response.json();
-        
         if (data.text) {
             brailleDisplay.textContent = data.text;
             imagePreview.style.display = "none";
-            showStatus(`Recognized: "${data.text}"`, "success");
+            updateRecognitionMeta(data);
+            const confidence = typeof data.confidence === 'number' ? data.confidence : null;
+            if (confidence !== null && confidence < 0.6) {
+                showStatus(`Recognized with low confidence (${Math.round(confidence * 100)}%): "${data.text}"`, "info");
+            } else {
+                showStatus(`Recognized: "${data.text}"`, "success");
+            }
             speak(data.text);
         } else if (data.error) {
             throw new Error(data.error);
         } else {
             throw new Error("No text recognized");
         }
-
     } catch (error) {
         console.error("Recognition error:", error);
-        
         brailleDisplay.textContent = "⚠️ Backend not connected\n\nTo use Braille recognition:\n1. Start Flask server: python app.py\n2. Upload a Braille image\n3. Click 'Analyze Image'";
+        hideRecognitionMeta();
         showStatus(`Error: ${error.message}`, "error");
     } finally {
         loadingSpinner.style.display = "none";
@@ -497,41 +555,22 @@ if (SR) {
     const rec = new SR();
     rec.lang = "en-US";
     rec.continuous = false;
-
-    rec.onstart = () => {
-        micBtn.classList.add("mic-active");
-        showStatus("Listening...", "info");
-    };
-    
-    rec.onend = () => micBtn.classList.remove("mic-active");
-    
+    rec.onstart  = () => { micBtn.classList.add("mic-active"); showStatus("Listening...", "info"); };
+    rec.onend    = () => micBtn.classList.remove("mic-active");
     rec.onresult = e => {
         textInput.value = e.results[0][0].transcript;
         showStatus(`Heard: "${e.results[0][0].transcript}"`, "success");
     };
-
     rec.onerror = e => {
         showStatus(`Voice input error: ${e.error}`, "error");
         micBtn.classList.remove("mic-active");
     };
-
-    micBtn.onclick = () => {
-        try {
-            rec.start();
-        } catch (e) {
-            showStatus("Microphone already active", "error");
-        }
-    };
+    micBtn.onclick = () => { try { rec.start(); } catch(e) { showStatus("Microphone already active", "error"); } };
 } else {
     micBtn.style.display = "none";
 }
 
-textInput.addEventListener('keypress', e => {
-    if (e.key === 'Enter') {
-        convertText();
-    }
-});
-
+textInput.addEventListener('keypress', e => { if (e.key === 'Enter') convertText(); });
 analyzeBtn.disabled = true;
 </script>
 

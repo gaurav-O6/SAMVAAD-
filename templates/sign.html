@@ -4,8 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SAMVAAD | Sign Language Mode</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
@@ -18,486 +21,929 @@ body {
     flex-direction:column;
 }
 
-/* HEADER */
-header { 
-    padding:20px 60px; 
-    display:flex; 
-    align-items:center; 
-    justify-content:space-between;
+header {
+    padding:20px 60px;
+    display:flex; align-items:center; justify-content:space-between;
     animation: fadeIn 0.8s ease-out;
 }
-header h1 { 
-    font-size:28px; 
-    font-weight:600; 
-    cursor:pointer;
-    transition: transform 0.3s;
-}
-header h1:hover {
-    transform: scale(1.05);
-}
+header h1 { font-size:28px; font-weight:600; cursor:pointer; transition:transform 0.3s; }
+header h1:hover { transform:scale(1.05); }
 header span { color:#00ffcc; }
 
-/* BACK BUTTON */
-#back-btn { 
-    position:absolute; 
-    top:25px; 
-    right:40px; 
-    padding:10px 22px; 
-    background:#00ffcc; 
-    color:#000; 
-    border:none; 
-    border-radius:25px; 
-    cursor:pointer; 
-    font-weight:600; 
-    font-size:16px; 
-    z-index:10;
-    transition: all 0.3s;
+#back-btn {
+    position:absolute; top:25px; right:40px;
+    padding:10px 22px; background:#00ffcc; color:#000;
+    border:none; border-radius:25px; cursor:pointer;
+    font-weight:600; font-size:16px; z-index:10; transition:all 0.3s;
 }
-#back-btn:hover { 
-    background:#00ddb3;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,255,204,0.4);
+#back-btn:hover { background:#00ddb3; transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,255,204,0.4); }
+
+#display-wrapper {
+    position: relative;
+    width: 90%;
+    max-width: 550px;
+    margin: 30px auto 0;
+    flex-shrink: 0;
 }
 
-/* MAIN DISPLAY */
 #main-display {
-    flex:1;
-    margin:30px auto;
     border-radius:20px;
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(12px);
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(12px);
     position:relative;
-    width:90%;
-    max-width:550px;
+    width:100%;
     height:360px;
     border:2px solid #00ffcc;
     box-shadow:0 0 20px rgba(0,255,204,0.4);
     overflow:hidden;
-    animation: fadeInUp 1s ease-out;
+    animation:fadeInUp 1s ease-out;
 }
 
-/* Avatar */
-#avatar { 
-    position:absolute; 
-    inset:0; 
-    display:flex; 
-    flex-direction: column;
-    align-items:center; 
-    justify-content:center; 
-    font-size:18px; 
-    color:#00ffcc; 
-    z-index:1;
-    gap: 15px;
+#avatar-3d {
+    position:absolute; inset:0;
+    display:flex; z-index:1; overflow:hidden;
 }
 
-#avatar-icon {
-    font-size: 64px;
-    animation: float 3s ease-in-out infinite;
-}
-
-/* Camera feed */
-#camera-feed { 
-    position:absolute; 
-    inset:0; 
-    width:100%; 
-    height:100%; 
-    object-fit:cover; 
-    transform:scaleX(-1); 
-    display:none; 
-    z-index:2; 
-}
-
-/* STATUS MESSAGE - UNIFIED POSITION */
-#status-msg {
-    text-align:center;
-    margin:15px auto 10px;
-    font-size:14px;
+#sign-label {
+    position:absolute; top:14px; right:16px; z-index:20;
+    font-family:'Poppins',sans-serif; font-size:1.45rem;
+    font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
     color:#00ffcc;
-    min-height:20px;
-    width:90%;
-    max-width:550px;
+    text-shadow:0 0 6px rgba(0,255,204,0.95), 0 0 14px rgba(0,255,204,0.65), 0 0 28px rgba(0,255,204,0.35);
+    opacity:0; transition:opacity 0.2s ease;
+    pointer-events:none; user-select:none;
+}
+#sign-label.visible { opacity:1; }
+
+@keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+
+#camera-video {
+    position:fixed;
+    top:-9999px; left:-9999px;
+    width:640px; height:480px;
+    pointer-events:none; opacity:0;
 }
 
-/* INPUT BAR */
-#input-bar { 
-    display:flex; 
-    align-items:center; 
-    justify-content:center; 
-    gap:12px; 
-    margin:10px auto 15px;
-    flex-wrap:wrap; 
-    width:90%; 
-    max-width:550px; 
-}
-#input-bar input[type="text"] { 
-    padding:12px 16px; 
-    border-radius:25px; 
-    border:none; 
-    width:300px; 
-    font-size:16px;
+#landmark-canvas {
+    position:absolute; top:0; left:0;
+    width:100%; height:100%;
+    display:none; z-index:2;
+    border-radius:18px;
 }
 
-/* ICON BUTTONS */
-.icon-btn { 
-    background:#00ffcc; 
-    border:none; 
-    color:#000; 
-    padding:12px; 
-    border-radius:50%; 
-    cursor:pointer; 
-    font-size:18px; 
-    transition:all 0.3s; 
+/* Ghost eye */
+#ghost-btn {
+    display: none;
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    z-index: 20;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #081410;
+    border: 1.5px solid rgba(0,255,204,0.45);
+    color: rgba(0,255,204,0.6);
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.22s ease;
+    padding: 0;
+    outline: none;
 }
-.icon-btn:hover { 
-    background:#00ddb3;
-    transform: scale(1.1);
-}
-
-/* MIC ACTIVE */
-.mic-active { 
-    background:#ff4d4d !important; 
-    box-shadow:0 0 15px rgba(255,77,77,0.8); 
-    animation:pulse 1.2s infinite; 
-}
-@keyframes pulse { 
-    0%{transform:scale(1)} 
-    50%{transform:scale(1.1)} 
-    100%{transform:scale(1)} 
-}
-
-/* ACTION BUTTONS */
-.controls { 
-    display:flex; 
-    justify-content:center; 
-    gap:20px; 
-    margin:0 auto 15px;
-    flex-wrap:wrap;
-    width:90%;
-    max-width:550px;
-}
-.action { 
-    padding:12px 28px; 
-    border-radius:25px; 
-    border:none; 
-    background:#00ffcc; 
-    color:#000; 
-    font-weight:600; 
-    cursor:pointer; 
-    transition:all 0.3s; 
-}
-.action:hover { 
-    background:#00ddb3; 
-    box-shadow:0 0 15px rgba(0,255,204,0.5);
-    transform: translateY(-2px);
-}
-
-.action:disabled {
-    background:#555;
-    cursor:not-allowed;
-    opacity:0.5;
-}
-
-/* OUTPUT BAR */
-#output-bar { 
-    display:none; 
-    align-items:center; 
-    justify-content:space-between; 
-    width:90%; 
-    max-width:550px; 
-    margin:10px auto 15px; 
-    gap:14px; 
-}
-#recognized-text { 
-    flex:1; 
-    padding:12px 16px; 
-    border-radius:25px; 
-    border:none; 
-    background: rgba(255,255,255,0.1); 
-    color:#fff; 
-    font-size:16px; 
-    margin-right:10px; 
-}
-.output-actions { 
-    display:flex; 
-    gap:10px; 
-}
-#speaker-btn, #back-camera-btn { 
-    background:#00ffcc; 
-    border:none; 
-    color:#000; 
-    border-radius:50%; 
-    padding:12px; 
-    cursor:pointer; 
-    font-size:18px;
-    transition: all 0.3s;
-}
-#speaker-btn:hover, #back-camera-btn:hover { 
-    background:#00ddb3;
-    transform: scale(1.1);
-}
-
-/* FOOTER */
-footer { 
-    text-align:center; 
-    padding:20px 15px; 
-    font-size:12px; 
-    opacity:0.7;
-    line-height: 1.6;
-}
-
-footer strong {
+#ghost-btn:hover {
+    background: rgba(0,255,204,0.1);
+    border-color: #00ffcc;
     color: #00ffcc;
+    box-shadow: 0 0 14px rgba(0,255,204,0.4);
+    transform: scale(1.12);
+}
+#ghost-btn.ghost-active {
+    background: rgba(0,255,204,0.15);
+    border-color: #00ffcc;
+    color: #00ffcc;
+    box-shadow: 0 0 16px rgba(0,255,204,0.55);
+}
+#ghost-btn svg {
+    width: 16px; height: 16px; display: block;
+    stroke: currentColor; fill: none;
+    stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+}
+#ghost-btn::after {
+    content: 'Ghost mode';
+    position: absolute;
+    top: calc(100% + 9px);
+    right: 0;
+    background: rgba(4,16,12,0.92);
+    border: 1px solid rgba(0,255,204,0.28);
+    color: #00ffcc;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: 'Poppins', sans-serif;
+    padding: 4px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-5px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    letter-spacing: 0.3px;
+}
+#ghost-btn:hover::after { opacity: 1; transform: translateY(0); }
+
+#live-gesture {
+    text-align:center; margin:12px auto 2px;
+    font-size:30px; font-weight:600; color:#00ffcc;
+    min-height:40px; width:90%; max-width:550px;
+    letter-spacing:3px; display:none;
 }
 
-/* Animations */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+#hold-bar-wrap {
+    width:90%; max-width:550px; margin:0 auto 6px;
+    height:5px; background:rgba(255,255,255,0.1);
+    border-radius:10px; display:none; overflow:hidden;
+}
+#hold-bar { height:100%; width:0%; background:#00ffcc; border-radius:10px; transition:width 0.03s linear; }
+
+#status-msg {
+    text-align:center; margin:8px auto 6px;
+    font-size:14px; color:#00ffcc; min-height:20px;
+    width:90%; max-width:550px;
 }
 
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+#input-bar {
+    display:flex; align-items:center; justify-content:center;
+    gap:12px; margin:10px auto 15px; flex-wrap:wrap;
+    width:90%; max-width:550px;
+}
+#input-bar input[type="text"] {
+    padding:12px 16px; border-radius:25px; border:none;
+    width:300px; font-size:16px;
 }
 
-@keyframes float {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-10px);
-    }
+.controls {
+    display:flex; justify-content:center; gap:20px;
+    margin:0 auto 15px; flex-wrap:wrap;
+    width:90%; max-width:550px;
 }
+.action {
+    padding:12px 28px; border-radius:25px; border:none;
+    background:#00ffcc; color:#000; font-weight:600;
+    cursor:pointer; transition:all 0.3s;
+}
+.action:hover { background:#00ddb3; box-shadow:0 0 15px rgba(0,255,204,0.5); transform:translateY(-2px); }
 
-/* Mobile responsiveness */
-@media (max-width: 600px) {
-    header {
-        padding: 20px 30px;
-    }
-    
-    #back-btn {
-        right: 20px;
-    }
-    
-    #main-display {
-        height: 280px;
-    }
-    
-    #input-bar input[type="text"] {
-        width: 200px;
-    }
+#output-section {
+    display:none; flex-direction:column; align-items:center;
+    width:90%; max-width:550px; margin:10px auto 15px; gap:10px;
 }
+#output-bar { display:flex; align-items:center; width:100%; gap:12px; }
+
+#recognized-text {
+    flex:1; padding:12px 16px; border-radius:25px; border:none;
+    background:rgba(255,255,255,0.1); color:#fff; font-size:16px;
+    font-family:'Poppins',sans-serif; letter-spacing:2px;
+    min-height:50px; word-break:break-all; line-height:1.6;
+    outline:none; white-space:pre-wrap; overflow-wrap:anywhere;
+}
+#recognized-text:focus { box-shadow:0 0 0 2px rgba(0,255,204,0.28); }
+
+#clear-actions { display:flex; justify-content:center; gap:14px; flex-wrap:wrap; }
+
+.icon-btn {
+    background: rgba(0,255,204,0.07);
+    border: 1.5px solid rgba(0,255,204,0.3);
+    color: #00ffcc;
+    padding: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    width: 46px; height: 46px;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0; outline: none;
+}
+.icon-btn svg {
+    width: 20px; height: 20px; display: block;
+    stroke: #00ffcc; fill: none;
+    stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round;
+    transition: stroke 0.2s;
+}
+.icon-btn:hover {
+    background: rgba(0,255,204,0.16); border-color: #00ffcc;
+    box-shadow: 0 0 14px rgba(0,255,204,0.3); transform: translateY(-2px);
+}
+.icon-btn:hover svg { stroke: #fff; }
+
+.icon-btn.danger { background: rgba(255,77,77,0.08); border-color: rgba(255,77,77,0.35); }
+.icon-btn.danger svg { stroke: #ff6b6b; }
+.icon-btn.danger:hover { background: rgba(255,77,77,0.18); border-color: #ff4d4d; box-shadow: 0 0 14px rgba(255,77,77,0.3); }
+.icon-btn.danger:hover svg { stroke: #fff; }
+
+.text-action-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 22px; border-radius: 25px;
+    border: 1.5px solid rgba(0,255,204,0.35);
+    background: rgba(0,255,204,0.07);
+    color: #00ffcc; font-family: 'Poppins', sans-serif;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all 0.25s ease; outline: none;
+}
+.text-action-btn svg {
+    width: 16px; height: 16px; flex-shrink: 0;
+    stroke: #00ffcc; fill: none;
+    stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round;
+    transition: stroke 0.2s;
+}
+.text-action-btn:hover {
+    background: rgba(0,255,204,0.16); border-color: #00ffcc;
+    box-shadow: 0 0 14px rgba(0,255,204,0.28); transform: translateY(-2px);
+}
+.text-action-btn:hover svg { stroke: #fff; }
+.text-action-btn.danger { border-color: rgba(255,77,77,0.35); background: rgba(255,77,77,0.07); color: #ff6b6b; }
+.text-action-btn.danger svg { stroke: #ff6b6b; }
+.text-action-btn.danger:hover { background: rgba(255,77,77,0.18); border-color: #ff4d4d; box-shadow: 0 0 14px rgba(255,77,77,0.28); color: #fff; }
+.text-action-btn.danger:hover svg { stroke: #fff; }
+
+.mic-active {
+    background: rgba(255,77,77,0.18) !important; border-color: #ff4d4d !important;
+    box-shadow: 0 0 15px rgba(255,77,77,0.55) !important; animation: pulse 1.2s infinite;
+}
+.mic-active svg { stroke: #ff4d4d !important; }
+@keyframes pulse { 0%{transform:scale(1)} 50%{transform:scale(1.1)} 100%{transform:scale(1)} }
+
+footer {
+    text-align:center; padding:20px 15px; font-size:12px;
+    opacity:0.7; line-height:1.6; margin-top:auto;
+}
+footer strong { color:#00ffcc; }
+
+.speed-btn {
+    padding:7px 16px; border-radius:20px;
+    border:2px solid rgba(0,255,204,0.3); background:transparent;
+    color:rgba(0,255,204,0.6); font-size:12px; font-weight:600;
+    font-family:'Poppins',sans-serif; cursor:pointer; transition:all 0.25s ease;
+}
+.speed-btn:hover { border-color:#00ffcc; color:#00ffcc; background:rgba(0,255,204,0.08); transform:translateY(-1px); }
+.speed-btn.active { background:#00ffcc; border-color:#00ffcc; color:#000; box-shadow:0 0 12px rgba(0,255,204,0.4); }
+
+@keyframes fadeIn   { from{opacity:0} to{opacity:1} }
+@keyframes fadeInUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+@keyframes float    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+
+@media (max-width:600px) {
+    header { padding:20px 30px; }
+    #back-btn { right:20px; }
+    #main-display { height:280px; }
+    #input-bar input[type="text"] { width:200px; }
+}
+::-webkit-scrollbar { display:none; }
+* { scrollbar-width:none; }
 </style>
 </head>
-
 <body>
 
 <header>
     <h1 onclick="window.location.href='index.html'"><span>SAM</span>VAAD</h1>
 </header>
-
 <button id="back-btn" onclick="window.location.href='options.html'">←</button>
 
-<main id="main-display">
-    <div id="avatar">
-        <div id="avatar-icon">🤟</div>
-        <div>Click camera to start Sign Recognition</div>
-    </div>
-    <video id="camera-feed" autoplay playsinline></video>
-</main>
+<div id="display-wrapper">
+    <button id="ghost-btn" onclick="toggleGhost()">
+        <svg viewBox="0 0 24 24">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+        </svg>
+    </button>
 
-<!-- STATUS MESSAGE -->
-<div id="status-msg"></div>
-
-<!-- INPUT BAR -->
-<div id="input-bar">
-    <button id="mic-btn" class="icon-btn" title="Voice input">🎤</button>
-    <input type="text" id="text-input" placeholder="Type text here...">
-    <button class="icon-btn" onclick="speak(textInput.value)" title="Speak text">🔊</button>
-    <button class="icon-btn" onclick="toggleCamera()" title="Start camera">📷</button>
+    <main id="main-display">
+        <div id="sign-label"></div>
+        <div id="avatar-3d">
+            <div id="sign-avatar-loading"
+                 style="position:absolute;inset:0;display:flex;flex-direction:column;
+                        align-items:center;justify-content:center;
+                        background:rgba(0,0,0,0.4);z-index:10;gap:12px;">
+                <div style="border:3px solid rgba(0,255,204,0.2);border-top:3px solid #00ffcc;
+                            border-radius:50%;width:40px;height:40px;
+                            animation:spin 1s linear infinite;"></div>
+                <span style="font-size:13px;color:#00ffcc;opacity:0.8;">Loading avatar...</span>
+            </div>
+            <div id="sign-avatar-fallback"
+                 style="position:absolute;inset:0;display:none;flex-direction:column;
+                        align-items:center;justify-content:center;gap:15px;color:#00ffcc;">
+                <div style="font-size:64px;animation:float 3s ease-in-out infinite;">🤟</div>
+                <div style="font-size:18px;">Click camera to start Sign Recognition</div>
+            </div>
+        </div>
+        <video id="camera-video" autoplay playsinline muted></video>
+        <canvas id="landmark-canvas"></canvas>
+    </main>
 </div>
 
-<!-- ACTION BUTTONS -->
+<div id="live-gesture"></div>
+<div id="hold-bar-wrap"><div id="hold-bar"></div></div>
+<div id="status-msg"></div>
+
+<div id="input-bar">
+    <button id="mic-btn" class="icon-btn" title="Voice input">
+        <svg viewBox="0 0 24 24">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+    </button>
+
+    <input type="text" id="text-input" placeholder="Type text here...">
+
+    <button class="icon-btn" onclick="speak(textInput.value)" title="Speak text">
+        <svg viewBox="0 0 24 24">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+    </button>
+
+    <button class="icon-btn" onclick="toggleCamera()" title="Start camera">
+        <svg viewBox="0 0 24 24">
+            <path d="M23 7l-7 5 7 5V7z"/>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+        </svg>
+    </button>
+</div>
+
 <div class="controls">
     <button class="action" onclick="convertToSign()">Convert → Sign</button>
     <button class="action" onclick="clearText()">Clear Text</button>
 </div>
 
-<!-- OUTPUT BAR -->
-<div id="output-bar">
-    <input type="text" id="recognized-text" placeholder="Recognized text will appear here..." readonly>
-    <div class="output-actions">
-        <button id="speaker-btn" title="Speak recognized text">🔊</button>
-        <button id="back-camera-btn" onclick="toggleCamera()" title="Stop camera">↩️</button>
+<div id="avatar-controls"
+     style="display:flex;flex-direction:column;align-items:center;gap:6px;
+            margin:0 auto 10px;width:90%;max-width:550px;">
+    <div style="font-size:11px;color:rgba(0,255,204,0.5);letter-spacing:0.5px;">⟵ drag to rotate ⟶</div>
+    <div style="display:flex;gap:10px;align-items:center;">
+        <span style="font-size:12px;color:rgba(255,255,255,0.5);letter-spacing:0.5px;margin-right:4px;">SPEED</span>
+        <button class="speed-btn" id="sp-slow"   onclick="setSpeed(0.5)">0.5×</button>
+        <button class="speed-btn active" id="sp-normal" onclick="setSpeed(1.0)">1.0×</button>
+        <button class="speed-btn" id="sp-fast"   onclick="setSpeed(2.0)">2.0×</button>
+    </div>
+</div>
+
+<div id="output-section">
+    <div id="output-bar">
+        <button class="icon-btn" id="speaker-btn" title="Speak recognized text">
+            <svg viewBox="0 0 24 24">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            </svg>
+        </button>
+
+        <div id="recognized-text" contenteditable="true" spellcheck="false"></div>
+
+        <button class="icon-btn" id="back-camera-btn" onclick="toggleCamera()" title="Stop camera">
+            <svg viewBox="0 0 24 24">
+                <polyline points="15 18 9 12 15 6"/>
+            </svg>
+        </button>
+    </div>
+
+    <div id="clear-actions">
+        <button class="text-action-btn" id="btn-clear-last">
+            <svg viewBox="0 0 24 24">
+                <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+                <line x1="18" y1="9" x2="12" y2="15"/>
+                <line x1="12" y1="9" x2="18" y2="15"/>
+            </svg>
+            Clear
+        </button>
+
+        <button class="text-action-btn danger" id="btn-clear-all">
+            <svg viewBox="0 0 24 24">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                <path d="M10 11v6"/><path d="M14 11v6"/>
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+            Clear All
+        </button>
     </div>
 </div>
 
 <footer>
-    <strong>SAMVAAD</strong> — Sign and Multimodal Voice Assistive Access & Dialogue<br>
+    <strong>SAMVAAD</strong> — Sign and Multimodal Voice Assistive Access &amp; Dialogue<br>
     © 2026 Final Year Engineering Project
 </footer>
 
+<script src="avatar.js"></script>
 <script>
-const cameraFeed = document.getElementById('camera-feed');
-const avatar = document.getElementById('avatar');
-const inputBar = document.getElementById('input-bar');
-const outputBar = document.getElementById('output-bar');
-const controlsDiv = document.querySelector('.controls');
-const textInput = document.getElementById('text-input');
-const micBtn = document.getElementById('mic-btn');
+// ── DOM refs ──────────────────────────────────────────────────────────
+const cameraVideo    = document.getElementById('camera-video');
+const landmarkCanvas = document.getElementById('landmark-canvas');
+const canvasCtx      = landmarkCanvas.getContext('2d');
+const avatarBox      = document.getElementById('avatar-3d');
+const inputBar       = document.getElementById('input-bar');
+const outputSection  = document.getElementById('output-section');
+const controlsDiv    = document.querySelector('.controls');
+const textInput      = document.getElementById('text-input');
+const micBtn         = document.getElementById('mic-btn');
 const recognizedText = document.getElementById('recognized-text');
-const speakerBtn = document.getElementById('speaker-btn');
-const statusMsg = document.getElementById('status-msg');
+const statusMsg      = document.getElementById('status-msg');
+const liveGesture    = document.getElementById('live-gesture');
+const holdBarWrap    = document.getElementById('hold-bar-wrap');
+const holdBar        = document.getElementById('hold-bar');
+const mainDisplay    = document.getElementById('main-display');
+const ghostBtn       = document.getElementById('ghost-btn');
 
-let cameraActive = false;
-let gestureInterval;
-let mediaStream = null;
+// ── State ─────────────────────────────────────────────────────────────
+let cameraActive  = false;
+let ghostMode     = false;
+let mediaStream   = null;
+let mpCamera      = null;
+let _confirmedStr = "";
 
-function showStatus(message, type) {
-    statusMsg.textContent = message;
-    statusMsg.style.color = type === "error" ? "#ff4d4d" : 
-                           type === "success" ? "#00ffcc" : 
-                           "#aaa";
-    
-    if (type !== "error" && message) {
-        setTimeout(() => statusMsg.textContent = "", 5000);
+// In-flight request guard — only 1 landmark request at a time
+let _requestInFlight = false;
+let _landmarkRequestController = null;
+let _lastLandmarkSendAt = 0;
+const LANDMARK_SEND_INTERVAL_MS = 120;
+
+const HOLD_MS       = 1250;
+const HOLD_DROP_GRACE_MS = 450;
+let _currentGesture = "";
+let _holdStart      = null;
+let _holdTimer      = null;
+let _holdProgress   = null;
+let _holdClearTimer = null;
+let _savedCaretOffset = 0;
+
+// ── Ghost mode toggle ─────────────────────────────────────────────────
+function toggleGhost() {
+    ghostMode = !ghostMode;
+    ghostBtn.classList.toggle('ghost-active', ghostMode);
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────
+function showStatus(msg, type) {
+    statusMsg.textContent = msg;
+    statusMsg.style.color = type === 'error'   ? '#ff4d4d'
+                          : type === 'success' ? '#00ffcc' : '#aaa';
+    if (type !== 'error' && msg) setTimeout(() => { statusMsg.textContent = ''; }, 3000);
+}
+function updateDisplay() {
+    if (recognizedText.textContent !== _confirmedStr) {
+        recognizedText.textContent = _confirmedStr;
     }
 }
 
-/* CAMERA TOGGLE */
-async function toggleCamera() {
-    cameraActive = !cameraActive;
-
-    cameraFeed.style.display = cameraActive ? "block" : "none";
-    avatar.style.display = cameraActive ? "none" : "flex";
-    inputBar.style.display = cameraActive ? "none" : "flex";
-    controlsDiv.style.display = cameraActive ? "none" : "flex";
-    outputBar.style.display = cameraActive ? "flex" : "none";
-
-    if (cameraActive) {
-        try {
-            showStatus("Starting camera...", "info");
-            
-            mediaStream = await navigator.mediaDevices.getUserMedia({ video:true, audio:false });
-            cameraFeed.srcObject = mediaStream;
-
-            cameraFeed.onloadedmetadata = () => cameraFeed.play().catch(err => {
-                console.warn("Video play failed:", err);
-            });
-
-            fetch("/start")
-                .then(() => {
-                    showStatus("● Recognizing signs...", "success");
-                    gestureInterval = setInterval(fetchGesture, 500);
-                })
-                .catch(err => {
-                    console.error("Backend start failed:", err);
-                    showStatus("⚠ Backend not connected", "error");
-                });
-                
-        } catch(err) {
-            console.error("Camera access failed:", err);
-            showStatus("⚠ Camera access denied", "error");
-            
-            setTimeout(() => {
-                cameraActive = false;
-                cameraFeed.style.display = "none";
-                avatar.style.display = "flex";
-                inputBar.style.display = "flex";
-                controlsDiv.style.display = "flex";
-                outputBar.style.display = "none";
-                statusMsg.textContent = "";
-            }, 2000);
-        }
-    } else {
-        if (mediaStream) {
-            mediaStream.getTracks().forEach(track => track.stop());
-            mediaStream = null;
-        }
-        cameraFeed.srcObject = null;
-        clearInterval(gestureInterval);
-        fetch("/stop").catch(err => console.warn("Backend stop failed:", err));
-        recognizedText.value = "";
-        statusMsg.textContent = "";
-    }
+function getCaretOffset(element) {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return element.textContent.length;
+    const range = selection.getRangeAt(0);
+    if (!element.contains(range.startContainer)) return element.textContent.length;
+    const preRange = range.cloneRange();
+    preRange.selectNodeContents(element);
+    preRange.setEnd(range.startContainer, range.startOffset);
+    return preRange.toString().length;
 }
 
-function fetchGesture() {
-    fetch("/result")
-        .then(res => res.json())
-        .then(data => {
-            if (data.text) {
-                recognizedText.value = data.text;
+function setCaretOffset(element, offset) {
+    const selection = window.getSelection();
+    const range = document.createRange();
+    let current = 0;
+
+    function walk(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            const next = current + node.nodeValue.length;
+            if (offset <= next) {
+                range.setStart(node, Math.max(0, offset - current));
+                range.collapse(true);
+                return true;
             }
+            current = next;
+            return false;
+        }
+        for (const child of node.childNodes) {
+            if (walk(child)) return true;
+        }
+        return false;
+    }
+
+    if (!walk(element)) {
+        range.selectNodeContents(element);
+        range.collapse(false);
+    }
+
+    selection.removeAllRanges();
+    selection.addRange(range);
+}
+
+function syncConfirmedTextFromEditor() {
+    _confirmedStr = recognizedText.textContent || '';
+    _savedCaretOffset = getCaretOffset(recognizedText);
+}
+
+function insertConfirmedText(text) {
+    const isFocused = document.activeElement === recognizedText;
+    const caret = isFocused ? getCaretOffset(recognizedText) : _savedCaretOffset;
+    _confirmedStr = _confirmedStr.slice(0, caret) + text + _confirmedStr.slice(caret);
+    updateDisplay();
+    _savedCaretOffset = caret + text.length;
+    setCaretOffset(recognizedText, _savedCaretOffset);
+}
+
+function resizeCanvas() {
+    landmarkCanvas.width  = mainDisplay.clientWidth;
+    landmarkCanvas.height = mainDisplay.clientHeight;
+}
+
+function updateSignLabel(label) {
+    const el = document.getElementById('sign-label');
+    if (!el) return;
+    el.textContent = label || '';
+    el.classList.toggle('visible', !!label);
+}
+
+// ── MediaPipe Hands ───────────────────────────────────────────────────
+const hands = new Hands({
+    locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+});
+hands.setOptions({
+    maxNumHands:            2,
+    modelComplexity:        1,
+    minDetectionConfidence: 0.6,
+    minTrackingConfidence:  0.55,
+});
+hands.onResults(onMpResults);
+
+// ── MediaPipe result callback ─────────────────────────────────────────
+function onMpResults(results) {
+    try {
+        const src  = results.image;
+        const srcW = src.videoWidth  || src.width  || 640;
+        const srcH = src.videoHeight || src.height || 480;
+        const cw   = landmarkCanvas.width;
+        const ch   = landmarkCanvas.height;
+
+        const scale = Math.max(cw / srcW, ch / srcH);
+        const dw    = srcW * scale;
+        const dh    = srcH * scale;
+        const dx    = (cw - dw) / 2;
+        const dy    = (ch - dh) / 2;
+
+        canvasCtx.clearRect(0, 0, cw, ch);
+
+        if (!ghostMode) {
+            canvasCtx.save();
+            canvasCtx.translate(cw, 0);
+            canvasCtx.scale(-1, 1);
+            canvasCtx.drawImage(src, dx, dy, dw, dh);
+            canvasCtx.restore();
+        } else {
+            canvasCtx.fillStyle = '#060d0a';
+            canvasCtx.fillRect(0, 0, cw, ch);
+        }
+
+        if (Array.isArray(results.multiHandLandmarks) && results.multiHandLandmarks.length) {
+            canvasCtx.save();
+            canvasCtx.translate(cw, 0);
+            canvasCtx.scale(-1, 1);
+
+            for (const landmarks of results.multiHandLandmarks) {
+                const remapped = landmarks.map(lm => ({
+                    x: (lm.x * dw + dx) / cw,
+                    y: (lm.y * dh + dy) / ch,
+                    z: lm.z,
+                }));
+                drawConnectors(canvasCtx, remapped, HAND_CONNECTIONS, {
+                    color:     ghostMode ? 'rgba(0,255,204,0.75)' : 'rgba(0,255,204,0.6)',
+                    lineWidth: ghostMode ? 2.5 : 2,
+                });
+                drawLandmarks(canvasCtx, remapped, {
+                    color:     '#00ffcc',
+                    fillColor: ghostMode ? '#001a14' : '#003d33',
+                    lineWidth: 1,
+                    radius:    ghostMode ? 6 : 5,
+                });
+            }
+            canvasCtx.restore();
+        }
+
+        _sendLandmarksToFlask(results);
+    } catch (err) {
+        console.error('MediaPipe result handling failed:', err);
+    }
+}
+
+// ── Send landmarks directly to Flask ─────────────────────────────────
+// FIX: Added AbortController and timeout to prevent hanging requests
+function _sendLandmarksToFlask(results) {
+    if (!cameraActive || _requestInFlight) return;
+    if (Date.now() - _lastLandmarkSendAt < LANDMARK_SEND_INTERVAL_MS) return;
+    _lastLandmarkSendAt = Date.now();
+
+    _landmarkRequestController = new AbortController();
+    const timeoutId = setTimeout(() => {
+        if (_landmarkRequestController) _landmarkRequestController.abort();
+    }, 5000);  // 5s timeout
+
+    const finishRequest = () => {
+        clearTimeout(timeoutId);
+        _requestInFlight = false;
+        _landmarkRequestController = null;
+    };
+
+    // No hands detected
+    if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+        _requestInFlight = true;
+        fetch('/process_landmarks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify([]),
+            signal: _landmarkRequestController.signal,
+        })
+        .then(r => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return r.json();
+        })
+        .then(data => {
+            finishRequest();
+            onGestureReceived(data.text || '');
         })
         .catch(err => {
-            console.error("Error fetching gesture:", err);
-            showStatus("⚠ Connection lost", "error");
+            finishRequest();
+            console.warn('Landmark request failed:', err);
         });
-}
-
-function convertToSign() {
-    const text = textInput.value.trim();
-    if (!text) {
-        showStatus("Please enter some text first", "error");
         return;
     }
-    
-    showStatus(`Converting "${text}" to sign language... (Feature coming soon)`, "info");
+
+    // Hands detected
+    const handedness = Array.isArray(results.multiHandedness) ? results.multiHandedness : [];
+    const payload = results.multiHandLandmarks
+        .map((landmarks, i) => {
+            const label = handedness[i]?.classification?.[0]?.label;
+            if (!Array.isArray(landmarks) || landmarks.length !== 21) return null;
+            return {
+                label: label || '',
+                landmarks: landmarks.map(lm => ({ x: lm.x, y: lm.y, z: lm.z })),
+            };
+        })
+        .filter(Boolean);
+
+    if (!payload.length) {
+        clearTimeout(timeoutId);
+        _landmarkRequestController = null;
+        return;
+    }
+
+    _requestInFlight = true;
+    fetch('/process_landmarks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: _landmarkRequestController.signal,
+    })
+    .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+    })
+    .then(data => {
+        finishRequest();
+        onGestureReceived(data.text || '');
+    })
+    .catch(err => {
+        finishRequest();
+        console.warn('Landmark request failed:', err);
+    });
 }
 
-function clearText() { 
+// ── Hold-to-confirm ───────────────────────────────────────────────────
+function onGestureReceived(gesture) {
+    if (!gesture) {
+        if (_currentGesture && !_holdClearTimer) {
+            _holdClearTimer = setTimeout(() => {
+                _resetHold();
+                liveGesture.textContent = '';
+            }, HOLD_DROP_GRACE_MS);
+        }
+        return;
+    }
+
+    clearTimeout(_holdClearTimer);
+    _holdClearTimer = null;
+    liveGesture.textContent = gesture;
+    if (gesture === _currentGesture) return;
+    _resetHold();
+    _currentGesture = gesture;
+    _holdStart      = Date.now();
+    holdBar.style.width = '0%';
+    _holdProgress = setInterval(() => {
+        holdBar.style.width =
+            Math.min(((Date.now() - _holdStart) / HOLD_MS) * 100, 100) + '%';
+    }, 30);
+    _holdTimer = setTimeout(() => _confirmGesture(_currentGesture), HOLD_MS);
+}
+
+function _confirmGesture(gesture) {
+    if (gesture === 'SPACE') {
+        insertConfirmedText(' ');
+        showStatus('✔ Space added', 'success');
+    } else if (gesture === 'STOP') {
+        insertConfirmedText('STOP');
+        showStatus('✔ "STOP" confirmed!', 'success');
+    } else {
+        insertConfirmedText(gesture);
+        showStatus(`✔ "${gesture}" confirmed!`, 'success');
+    }
+    _resetHold();
+    liveGesture.textContent = '';
+}
+
+function _resetHold() {
+    clearTimeout(_holdTimer);
+    clearInterval(_holdProgress);
+    clearTimeout(_holdClearTimer);
+    _holdTimer = _holdProgress = _holdStart = _holdClearTimer = null;
+    holdBar.style.width = '0%';
+    _currentGesture = '';
+}
+
+// ── Output controls ───────────────────────────────────────────────────
+document.getElementById('speaker-btn').onclick    = () => speak(_confirmedStr);
+document.getElementById('btn-clear-last').onclick = () => {
+    if (!_confirmedStr.length) return;
+    const caret = document.activeElement === recognizedText ? getCaretOffset(recognizedText) : _savedCaretOffset;
+    if (caret <= 0) return;
+    _confirmedStr = _confirmedStr.slice(0, caret - 1) + _confirmedStr.slice(caret);
+    updateDisplay();
+    _savedCaretOffset = caret - 1;
+    setCaretOffset(recognizedText, _savedCaretOffset);
+};
+document.getElementById('btn-clear-all').onclick  = () => {
+    _confirmedStr = ''; _savedCaretOffset = 0; updateDisplay(); liveGesture.textContent = ''; _resetHold();
+};
+recognizedText.addEventListener('input', syncConfirmedTextFromEditor);
+recognizedText.addEventListener('mouseup', () => { _savedCaretOffset = getCaretOffset(recognizedText); });
+recognizedText.addEventListener('keyup', () => { _savedCaretOffset = getCaretOffset(recognizedText); });
+recognizedText.addEventListener('focus', () => { setCaretOffset(recognizedText, Math.min(_savedCaretOffset, _confirmedStr.length)); });
+recognizedText.addEventListener('beforeinput', event => {
+    if (event.inputType && event.inputType.startsWith('insert')) event.preventDefault();
+    if (event.inputType === 'deleteContentBackward' || event.inputType === 'deleteContentForward') event.preventDefault();
+});
+recognizedText.addEventListener('keydown', event => {
+    const allowedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab'];
+    if (allowedKeys.includes(event.key)) return;
+    if ((event.ctrlKey || event.metaKey) && ['a', 'c'].includes(event.key.toLowerCase())) return;
+    event.preventDefault();
+});
+recognizedText.addEventListener('paste', event => event.preventDefault());
+recognizedText.addEventListener('drop', event => event.preventDefault());
+
+// ── Camera toggle ─────────────────────────────────────────────────────
+async function toggleCamera() {
+    cameraActive = !cameraActive;
+    const ac = document.getElementById('avatar-controls');
+
+    landmarkCanvas.style.display = cameraActive ? 'block'  : 'none';
+    ghostBtn.style.display       = cameraActive ? 'flex'   : 'none';
+    avatarBox.style.visibility   = cameraActive ? 'hidden' : 'visible';
+    inputBar.style.display       = cameraActive ? 'none'   : 'flex';
+    controlsDiv.style.display    = cameraActive ? 'none'   : 'flex';
+    outputSection.style.display  = cameraActive ? 'flex'   : 'none';
+    liveGesture.style.display    = cameraActive ? 'block'  : 'none';
+    holdBarWrap.style.display    = cameraActive ? 'block'  : 'none';
+    if (ac) ac.style.display     = cameraActive ? 'none'   : 'flex';
+
+    if (cameraActive) {
+        SAMVAADAvatar.stop();
+        try {
+            showStatus('Starting camera...', 'info');
+            mediaStream = await navigator.mediaDevices.getUserMedia({
+                video: { width:{ideal:640}, height:{ideal:480}, facingMode:'user' },
+                audio: false,
+            });
+            cameraVideo.srcObject = mediaStream;
+            await new Promise(res => {
+                cameraVideo.onloadedmetadata = () => { cameraVideo.play().catch(()=>{}); res(); };
+            });
+
+            resizeCanvas();
+
+            mpCamera = new Camera(cameraVideo, {
+                onFrame: async () => {
+                    if (!cameraActive) return;
+                    try {
+                        await hands.send({ image: cameraVideo });
+                    } catch (err) {
+                        console.error('MediaPipe hands processing failed:', err);
+                    }
+                },
+                width: 640, height: 480,
+            });
+            await mpCamera.start();
+            showStatus('● Hold a sign for 1.25s to confirm', 'success');
+
+        } catch (err) {
+            console.error(err);
+            showStatus('⚠ Camera access denied', 'error');
+            _rollbackCamera(ac);
+        }
+
+    } else {
+        ghostMode = false;
+        ghostBtn.classList.remove('ghost-active');
+        if (mpCamera)    { mpCamera.stop(); mpCamera = null; }
+        if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+        cameraVideo.srcObject = null;
+        if (_landmarkRequestController) {
+            _landmarkRequestController.abort();
+            _landmarkRequestController = null;
+        }
+        _requestInFlight = false;  // always clear on camera stop
+        _lastLandmarkSendAt = 0;
+        _resetHold();
+        canvasCtx.clearRect(0, 0, landmarkCanvas.width, landmarkCanvas.height);
+        statusMsg.textContent   = '';
+        liveGesture.textContent = '';
+        updateSignLabel('');
+    }
+}
+
+function _rollbackCamera(ac) {
+    cameraActive = false;
+    landmarkCanvas.style.display = 'none';
+    ghostBtn.style.display       = 'none';
+    avatarBox.style.visibility   = 'visible';
+    inputBar.style.display       = 'flex';
+    controlsDiv.style.display    = 'flex';
+    outputSection.style.display  = 'none';
+    liveGesture.style.display    = 'none';
+    holdBarWrap.style.display    = 'none';
+    if (ac) ac.style.display     = 'flex';
+    _lastLandmarkSendAt = 0;
+}
+
+window.addEventListener('resize', () => { if (cameraActive) resizeCanvas(); });
+
+// ── Avatar init ───────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+    try {
+        await SAMVAADAvatar.init({
+            containerId:      'avatar-3d',
+            loadingId:        'sign-avatar-loading',
+            animationsFolder: 'animations/',
+            baseAnimation:    'A',
+            onSignChange:     updateSignLabel,
+        });
+        if (!SAMVAADAvatar.isReady()) {
+            document.getElementById('sign-avatar-fallback').style.display = 'flex';
+        }
+    } catch (e) {
+        document.getElementById('sign-avatar-loading').style.display = 'none';
+        document.getElementById('sign-avatar-fallback').style.display = 'flex';
+    }
+});
+
+function convertToSign() {
+    const t = textInput.value.trim();
+    if (!t) { showStatus('Please enter some text first', 'error'); return; }
+    showStatus(`Signing: "${t}"`, 'success');
+    SAMVAADAvatar.convertToSign(t);
+}
+function clearText() {
     textInput.value = '';
     statusMsg.textContent = '';
+    SAMVAADAvatar.stop();
 }
-
 function speak(text) {
     if (!text) return;
     speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.9;
-    speechSynthesis.speak(utterance);
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.9;
+    speechSynthesis.speak(u);
+}
+function setSpeed(val) {
+    SAMVAADAvatar.setSpeed(val);
+    document.getElementById('sp-slow').classList.toggle('active',   val === 0.5);
+    document.getElementById('sp-normal').classList.toggle('active', val === 1.0);
+    document.getElementById('sp-fast').classList.toggle('active',   val === 2.0);
 }
 
-speakerBtn.onclick = () => speak(recognizedText.value);
-
+// ── Voice input ───────────────────────────────────────────────────────
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 if (SR) {
     const rec = new SR();
-    rec.lang = "en-US";
-    rec.continuous = false;
-    
-    rec.onstart = () => {
-        micBtn.classList.add("mic-active");
-        showStatus("Listening...", "info");
-    };
-    rec.onend = () => micBtn.classList.remove("mic-active");
+    rec.lang = 'en-US'; rec.continuous = false;
+    rec.onstart  = () => { micBtn.classList.add('mic-active'); showStatus('Listening...', 'info'); };
+    rec.onend    = () => micBtn.classList.remove('mic-active');
     rec.onresult = e => {
         textInput.value = e.results[0][0].transcript;
-        showStatus(`Heard: "${e.results[0][0].transcript}"`, "success");
+        showStatus(`Heard: "${e.results[0][0].transcript}"`, 'success');
     };
-    rec.onerror = e => {
-        showStatus(`Voice input error: ${e.error}`, "error");
-        micBtn.classList.remove("mic-active");
-    };
-    
-    micBtn.onclick = () => {
-        try {
-            rec.start();
-        } catch(e) {
-            showStatus("Microphone already active", "error");
-        }
-    };
+    rec.onerror = e => { showStatus(`Voice error: ${e.error}`, 'error'); micBtn.classList.remove('mic-active'); };
+    micBtn.onclick = () => { try { rec.start(); } catch(e) { showStatus('Mic already active', 'error'); } };
 } else {
-    micBtn.style.display = "none";
+    micBtn.style.display = 'none';
 }
 </script>
-
 </body>
 </html>

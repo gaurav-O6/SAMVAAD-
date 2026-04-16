@@ -39,7 +39,6 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-
 # ══════════════════════════════════════════════════════════════════════════════
 #  WORD SPLITTER (for Braille images without spaces between words)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -99,7 +98,6 @@ def _split_concatenated_words(text: str) -> str:
     words.reverse()
     return ' '.join(words) if words else text
 
-
 def auto_space_text(raw_text: str, remove_newlines: bool = True) -> str:
     """
     Post-process Braille decoder output to add spaces and clean formatting.
@@ -136,8 +134,9 @@ def auto_space_text(raw_text: str, remove_newlines: bool = True) -> str:
         if not line:
             continue
         
-        # Split words if line has no spaces
-        if ' ' not in line and len(line) > 2:
+        # Only split if genuinely long concatenated text (>12 chars).
+        # Short words and names like 'gaurav' (6 chars) are left as-is.
+        if ' ' not in line and len(line) > 12:
             line = _split_concatenated_words(line)
         
         processed_lines.append(line)
@@ -147,7 +146,6 @@ def auto_space_text(raw_text: str, remove_newlines: bool = True) -> str:
         return ' '.join(processed_lines)
     else:
         return '\n'.join(processed_lines)
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  BRAILLE LOOKUP TABLE  (Grade-1 English)
@@ -189,7 +187,6 @@ DIGIT_MAP: Dict[Tuple[int, ...], str] = {
 NUMBER_INDICATOR  = (0,0,1,1,1,1)  # dots 3,4,5,6
 CAPITAL_INDICATOR = (0,0,0,0,0,1)  # dot 6 only
 
-
 # ══════════════════════════════════════════════════════════════════════════════
 #  DATA STRUCTURES
 # ══════════════════════════════════════════════════════════════════════════════
@@ -204,6 +201,15 @@ class BrailleCell:
     pattern: Tuple[int, ...] = field(default_factory=lambda: (0,)*6)
     bbox: Tuple[float,float,float,float] = (0,0,0,0)
 
+@dataclass
+class RecognitionResult:
+    text: str
+    raw_text: str
+    confidence: float
+    dots_count: int
+    cells_count: int
+    unknown_cells: int
+    used_auto_space: bool
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  STAGE 1  IMAGE LOADER
@@ -224,7 +230,6 @@ def load_image(source: Union[str, Path, np.ndarray]) -> np.ndarray:
             raise ValueError("Array must be 2-D or 3-D")
         return source.copy()
     raise ValueError(f"Unsupported type: {type(source)}")
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  STAGE 2  PREPROCESSOR
@@ -262,7 +267,6 @@ def preprocess(bgr: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         binary = cv2.bitwise_not(binary)
 
     return gray, binary
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  STAGE 3+4  DOT DETECTOR + FILTER
@@ -325,7 +329,6 @@ def detect_dots(binary: np.ndarray) -> List[Dot]:
     dots.sort(key=lambda d: (d.cy, d.cx))
     return dots
 
-
 # ══════════════════════════════════════════════════════════════════════════════
 #  STAGE 5+6  CELL SEGMENTER
 # ══════════════════════════════════════════════════════════════════════════════
@@ -342,17 +345,42 @@ def _merge_close(values: List[float], tol: float) -> List[float]:
             clusters.append([v])
     return [float(np.mean(c)) for c in clusters]
 
-
 def _estimate_spacings(dots: List[Dot]) -> Tuple[float, float]:
-    """35th-percentile nearest-neighbour → robust intra-cell spacing estimate."""
-    h_nn, v_nn = [], []
-    for i, d in enumerate(dots):
-        h_nn.append(min(abs(d.cx - dots[j].cx) for j in range(len(dots)) if j != i))
-        v_nn.append(min(abs(d.cy - dots[j].cy) for j in range(len(dots)) if j != i))
-    h = max(float(np.percentile(h_nn, 35)), float(np.mean([d.radius for d in dots])) * 2)
-    v = max(float(np.percentile(v_nn, 35)), h * 0.5)
-    return v, h
+    """Estimate intra-cell vertical and horizontal spacing from dot positions.
 
+    The original nearest-neighbour approach picks up dot-radius distances
+    (~12px) instead of the true intra-cell column gap (~19-20px), causing
+    all column pairs to be missed.  We now derive h_sp from the smallest
+    recurring horizontal gap between distinct column centres, which is the
+    left-col → right-col distance inside one Braille cell.
+    """
+    mean_r = float(np.mean([d.radius for d in dots])) or 1.0
+
+    # ── Vertical spacing: 35th-pct vertical nearest-neighbour ────────────────
+    v_nn = []
+    for i, d in enumerate(dots):
+        others_v = [abs(d.cy - dots[j].cy) for j in range(len(dots))
+                    if j != i and abs(d.cy - dots[j].cy) > 0]
+        if others_v:
+            v_nn.append(min(others_v))
+    v = max(float(np.percentile(v_nn, 35)) if v_nn else mean_r * 3,
+            mean_r * 2)
+
+    # ── Horizontal spacing: smallest gap between distinct column centres ─────
+    # Collect all unique cx values, sort them, take gaps between consecutive
+    # ones.  The intra-cell gap (left→right column) is the smallest recurring
+    # gap and is always smaller than any inter-cell gap.
+    unique_cx = sorted(set(round(d.cx) for d in dots))
+    if len(unique_cx) >= 2:
+        h_gaps = [unique_cx[k+1] - unique_cx[k]
+                  for k in range(len(unique_cx) - 1)
+                  if unique_cx[k+1] - unique_cx[k] > mean_r]   # skip sub-pixel noise
+        h = float(np.percentile(h_gaps, 25)) if h_gaps else mean_r * 3
+    else:
+        h = mean_r * 3
+
+    h = max(h, mean_r * 2)   # floor: never smaller than a dot diameter
+    return v, h
 
 def _cluster_rows(dots: List[Dot], v_sp: float) -> List[List[Dot]]:
     tol = v_sp * 0.55
@@ -368,6 +396,63 @@ def _cluster_rows(dots: List[Dot], v_sp: float) -> List[List[Dot]]:
             cy = d.cy
     return [sorted(r, key=lambda d: d.cx) for r in rows]
 
+def _infer_row_positions(grp_cys: List[float], default_step: float) -> List[int]:
+    """
+    Map observed dot-row centres onto Braille row indices 0/1/2.
+
+    This avoids relying on a single fixed pixel ratio. With 2 observed rows,
+    a larger-than-expected gap implies a missing middle row (e.g. dots 1 and 3).
+    """
+    if not grp_cys:
+        return []
+    if len(grp_cys) == 1:
+        return [0]
+
+    sorted_cys = sorted(grp_cys)
+    diffs = [sorted_cys[i + 1] - sorted_cys[i] for i in range(len(sorted_cys) - 1)]
+    row_step = max(default_step, 1.0)
+    positions = [0]
+    current = 0
+    for gap in diffs:
+        current += 2 if gap >= row_step * 1.55 else 1
+        positions.append(min(current, 2))
+
+    return positions
+
+def _estimate_confidence(
+    dots: List[Dot],
+    cells: List[BrailleCell],
+    raw_text: str,
+    processed_text: str,
+    auto_space_used: bool,
+) -> float:
+    if not dots or not cells:
+        return 0.0
+
+    non_blank_cells = [c for c in cells if any(c.pattern)]
+    if not non_blank_cells:
+        return 0.0
+
+    unknown_cells = sum(1 for c in non_blank_cells if BRAILLE_MAP.get(c.pattern) is None)
+    unknown_ratio = unknown_cells / max(len(non_blank_cells), 1)
+
+    radii = np.array([d.radius for d in dots], dtype=float)
+    radius_cv = float(np.std(radii) / max(np.mean(radii), 1e-6)) if len(radii) > 1 else 0.0
+
+    occupied_per_cell = [sum(c.pattern) for c in non_blank_cells]
+    occupancy_mean = float(np.mean(occupied_per_cell)) if occupied_per_cell else 0.0
+
+    score = 1.0
+    score -= min(0.55, unknown_ratio * 0.9)
+    score -= min(0.18, radius_cv * 0.35)
+    if occupancy_mean > 4.6:
+        score -= 0.08
+    if auto_space_used and processed_text != raw_text:
+        score -= 0.06
+    if len(non_blank_cells) == 1:
+        score -= 0.20
+
+    return max(0.0, min(1.0, score))
 
 def segment_cells(dots: List[Dot]) -> List[BrailleCell]:
     if not dots:
@@ -376,7 +461,7 @@ def segment_cells(dots: List[Dot]) -> List[BrailleCell]:
     # ── BUG FIX 1: single-dot letters (e.g. A = only dot-1) ─────────────────
     if len(dots) == 1:
         d = dots[0]
-        return [BrailleCell(col=0, row=0, pattern=(1,0,0,0,0,0),
+        return [BrailleCell(col=0, row=0, pattern=(1, 0, 0, 0, 0, 0),
                             bbox=(d.cx, d.cy, 0, 0))]
 
     v_sp, h_sp = _estimate_spacings(dots)
@@ -435,22 +520,15 @@ def segment_cells(dots: List[Dot]) -> List[BrailleCell]:
         # enumerate(grp) gives indices 0,1 but we need positions 0,2.
         # Scale-invariant unit step: inter-row gap ≈ 3.14 × mean_dot_radius.
         # This ratio is constant across all image scales (verified empirically).
-        mean_r   = float(np.mean([d.radius for row in grp for d in row])) or 1.0
-        row_unit = mean_r * 3.14   # 1 Braille row step in pixels
-
         grp_cys = [float(np.mean([d.cy for d in r])) for r in grp]
-        ref_cy  = grp_cys[0]
-
-        def cy_to_pos(cy: float) -> int:
-            offset = cy - ref_cy
-            pos = int(round(offset / row_unit)) if row_unit > 0.1 else 0
-            return max(0, min(2, pos))
+        mean_r = float(np.mean([d.radius for row in grp for d in row])) or 1.0
+        row_step = min(max(median_gap, 1.0), max(mean_r * 3.14, 1.0))
+        row_positions = _infer_row_positions(grp_cys, row_step)
 
         for cell_idx, (lx, rx) in enumerate(pairs):
             pat = [0]*6
             x_tol = h_sp * 0.6
-            for row_dots, rcy in zip(grp, grp_cys):
-                ri = cy_to_pos(rcy)
+            for row_dots, ri in zip(grp, row_positions):
                 for d in row_dots:
                     if abs(d.cx - lx) < x_tol:
                         pat[ri] = 1          # positions 1, 2, 3
@@ -466,12 +544,14 @@ def segment_cells(dots: List[Dot]) -> List[BrailleCell]:
                 xs = [d.cx for d in cell_dots]; ys = [d.cy for d in cell_dots]
                 bbox = (min(xs), min(ys), max(xs)-min(xs), max(ys)-min(ys))
             else:
-                bbox = (lx, 0, 0, 0)
+                continue
+
+            if not any(pat):
+                continue
 
             cells.append(BrailleCell(col=cell_idx, row=line_idx,
                                      pattern=tuple(pat), bbox=bbox))
     return cells
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  STAGE 7+8  DECODER + TEXT RECONSTRUCTION
@@ -499,8 +579,15 @@ def decode_cells(cells: List[BrailleCell]) -> str:
             num_mode = True; continue
         if pat == CAPITAL_INDICATOR:
             cap_next = True; continue
+
+        # Only output a space for a genuinely blank cell (all dots absent).
+        # Skip it if the last character added was already a space
+        # to avoid double-spacing from artifact empty cells.
         if pat == (0,0,0,0,0,0):
-            line_buf.append(' '); num_mode = False; continue
+            if line_buf and line_buf[-1] != ' ':
+                line_buf.append(' ')
+            num_mode = False
+            continue
 
         if num_mode:
             ch = DIGIT_MAP.get(pat)
@@ -517,7 +604,6 @@ def decode_cells(cells: List[BrailleCell]) -> str:
     lines[prev_row] = "".join(line_buf)
     return "\n".join(lines[k].strip() for k in sorted(lines))
 
-
 # ══════════════════════════════════════════════════════════════════════════════
 #  PUBLIC API  (for SAMVAAD integration)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -530,7 +616,7 @@ class BrailleRecognizer:
     text = BrailleRecognizer().recognize("image.png")
     """
 
-    def recognize(self, image: Union[str, Path, np.ndarray], auto_space: bool = True) -> str:
+    def analyze(self, image: Union[str, Path, np.ndarray], auto_space: bool = True) -> RecognitionResult:
         """
         Recognize Braille text from an image.
         
@@ -544,33 +630,59 @@ class BrailleRecognizer:
             
         Returns
         -------
-        str
-            Decoded text
+        RecognitionResult
+            Decoded text plus confidence and detection metadata
         """
-        bgr   = load_image(image)
+        bgr = load_image(image)
         _, bn = preprocess(bgr)
-        dots  = detect_dots(bn)
+        dots = detect_dots(bn)
         if not dots:
-            return ""
+            return RecognitionResult(
+                text="",
+                raw_text="",
+                confidence=0.0,
+                dots_count=0,
+                cells_count=0,
+                unknown_cells=0,
+                used_auto_space=auto_space,
+            )
         cells = segment_cells(dots)
         raw_text = decode_cells(cells)
-        
-        if auto_space:
-            return auto_space_text(raw_text, remove_newlines=True)
-        return raw_text
+        text = auto_space_text(raw_text, remove_newlines=True) if auto_space else raw_text
+        unknown_cells = sum(1 for c in cells if any(c.pattern) and BRAILLE_MAP.get(c.pattern) is None)
+        confidence = _estimate_confidence(dots, cells, raw_text, text, auto_space)
+        return RecognitionResult(
+            text=text,
+            raw_text=raw_text,
+            confidence=confidence,
+            dots_count=len(dots),
+            cells_count=len(cells),
+            unknown_cells=unknown_cells,
+            used_auto_space=auto_space,
+        )
 
-    def recognize_with_debug(self, image: Union[str, Path, np.ndarray]) -> Tuple[str, Dict[str, np.ndarray]]:
-        """Returns (text, debug_images_dict)."""
-        bgr   = load_image(image)
-        gray, binary = preprocess(bgr)
-        dots  = detect_dots(binary)
+    def recognize(self, image: Union[str, Path, np.ndarray], auto_space: bool = True) -> str:
+        """
+        Recognize Braille text from an image.
+        """
+        result = self.analyze(image, auto_space=auto_space)
+        return result.text
+
+    def recognize_with_debug(
+        self,
+        image: Union[str, Path, np.ndarray]
+    ) -> Tuple[str, Dict[str, np.ndarray], RecognitionResult]:
+        """Returns (text, debug_images_dict, result)."""
+        result = self.analyze(image)
+        bgr = load_image(image)
+        _, binary = preprocess(bgr)
+        dots = detect_dots(binary)
         cells = segment_cells(dots) if dots else []
-        text  = decode_cells(cells)
 
         # Build overlays
         debug = {
             "original": bgr.copy(),
-            "binary"  : cv2.cvtColor(binary, cv2.COLOR_GRAY2BGR),
+            "binary": cv2.cvtColor(binary, cv2.COLOR_GRAY2BGR),
         }
         dots_img = bgr.copy()
         for d in dots:
@@ -587,13 +699,11 @@ class BrailleRecognizer:
                         (int(x), int(y)-8), cv2.FONT_HERSHEY_SIMPLEX,
                         0.35, (0,0,220), 1)
         debug["cells"] = cells_img
-        return text, debug
-
+        return result.text, debug, result
 
 # Convenience function
 def recognize_braille(image: Union[str, Path, np.ndarray]) -> str:
     return BrailleRecognizer().recognize(image)
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  RUNNER  (when you execute this file directly)
@@ -610,23 +720,23 @@ os.system("")  # enable ANSI colours on Windows
 G = "\033[92m"; R = "\033[91m"; Y = "\033[93m"; C = "\033[96m"
 B = "\033[1m";  Z = "\033[0m"
 
-
 def _run_single(path: Path, debug: bool):
     rec = BrailleRecognizer()
     print(f"\n{B}Image:{Z} {path.name}")
     t0 = time.perf_counter()
     if debug:
-        text, dbg = rec.recognize_with_debug(path)
+        text, dbg, result = rec.recognize_with_debug(path)
         for name, img in dbg.items():
             out = path.parent / f"{path.stem}_debug_{name}.png"
             cv2.imwrite(str(out), img)
             print(f"  {C}Debug saved → {out.name}{Z}")
     else:
-        text = rec.recognize(path)
+        result = rec.analyze(path)
+        text = result.text
     ms = (time.perf_counter() - t0) * 1000
     print(f"{B}Result:{Z} {G}{text!r}{Z}")
+    print(f"{B}Conf:  {Z} {result.confidence:.2f}")
     print(f"{B}Time:  {Z} {ms:.0f} ms\n")
-
 
 def _run_test(folder: Path, debug: bool):
     imgs = sorted(p for p in folder.iterdir() if p.suffix.lower() in IMG_EXTS)
@@ -648,11 +758,12 @@ def _run_test(folder: Path, debug: bool):
         exp = _EXPECTED.get(p.stem.lower())
         t0 = time.perf_counter()
         if debug:
-            text, dbg = rec.recognize_with_debug(p)
+            text, dbg, result = rec.recognize_with_debug(p)
             for name, img in dbg.items():
                 cv2.imwrite(str(p.parent / f"{p.stem}_debug_{name}.png"), img)
         else:
-            text = rec.recognize(p)
+            result = rec.analyze(p)
+            text = result.text
         ms = (time.perf_counter() - t0)*1000
         got = text.strip().lower()
 
@@ -677,7 +788,6 @@ def _run_test(folder: Path, debug: bool):
             print(f"    {fn:<22} expected={ex!r}  got={gt!r}")
     print(f"{B}{'='*62}{Z}\n")
 
-
 def _run_interactive(debug: bool):
     rec = BrailleRecognizer()
     print(f"\n{B}{'='*55}{Z}")
@@ -699,17 +809,18 @@ def _run_interactive(debug: bool):
 
         t0 = time.perf_counter()
         if debug:
-            text, dbg = rec.recognize_with_debug(p)
+            text, dbg, result = rec.recognize_with_debug(p)
             for name, img in dbg.items():
                 out = p.parent / f"{p.stem}_debug_{name}.png"
                 cv2.imwrite(str(out), img)
                 print(f"  {C}Debug → {out.name}{Z}")
         else:
-            text = rec.recognize(p)
+            result = rec.analyze(p)
+            text = result.text
         ms = (time.perf_counter() - t0)*1000
         print(f"\n  {B}Result:{Z} {G}{text!r}{Z}")
+        print(f"  {B}Conf:  {Z} {result.confidence:.2f}")
         print(f"  {B}Time:  {Z} {ms:.0f} ms\n")
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  ENTRY POINT

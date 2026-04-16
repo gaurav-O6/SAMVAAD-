@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAMVAAD | Gesture Recorder</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
+body {
+    min-height:100vh;
+    background: linear-gradient(135deg, #000000, #203a43, #000000);
+    color:#fff;
+    display:flex;
+    flex-direction:column;
+}
+header {
+    padding:20px 40px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+header h1 { font-size:28px; font-weight:600; cursor:pointer; }
+header span { color:#00ffcc; }
+#back-btn {
+    padding:10px 20px;
+    border:none;
+    border-radius:24px;
+    background:#00ffcc;
+    color:#000;
+    font-weight:600;
+    cursor:pointer;
+}
+main {
+    width:min(1100px, 94vw);
+    margin:0 auto 30px;
+    display:grid;
+    grid-template-columns: minmax(320px, 540px) minmax(280px, 1fr);
+    gap:24px;
+}
+.panel {
+    background:rgba(255,255,255,0.07);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:24px;
+    padding:22px;
+    backdrop-filter: blur(14px);
+}
+#camera-shell {
+    position:relative;
+    aspect-ratio: 4 / 3;
+    border-radius:20px;
+    overflow:hidden;
+    background:#06120f;
+    border:1px solid rgba(0,255,204,0.25);
+}
+#camera-video {
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    transform:scaleX(-1);
+}
+#landmark-canvas {
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+}
+.panel h2 { font-size:24px; margin-bottom:8px; }
+.muted { color:rgba(255,255,255,0.72); line-height:1.6; font-size:14px; }
+.stack { display:flex; flex-direction:column; gap:14px; margin-top:18px; }
+.row { display:flex; gap:12px; flex-wrap:wrap; }
+.field { display:flex; flex-direction:column; gap:8px; flex:1; min-width:180px; }
+.field label { font-size:13px; color:#00ffcc; }
+.field input, .field textarea, .field select {
+    width:100%;
+    padding:12px 14px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,0.12);
+    background:rgba(255,255,255,0.08);
+    color:#fff;
+}
+.field textarea { min-height:84px; resize:vertical; }
+.btn-row { display:flex; gap:12px; flex-wrap:wrap; }
+.btn {
+    padding:12px 20px;
+    border:none;
+    border-radius:24px;
+    cursor:pointer;
+    font-weight:600;
+}
+.btn-primary { background:#00ffcc; color:#000; }
+.btn-secondary { background:rgba(255,255,255,0.12); color:#fff; }
+.status {
+    min-height:24px;
+    font-size:14px;
+}
+.status.success { color:#00ffcc; }
+.status.error { color:#ff6b6b; }
+.status.info { color:#c8d0d1; }
+.badge-row {
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+.badge {
+    padding:8px 12px;
+    border-radius:999px;
+    background:rgba(0,255,204,0.12);
+    color:#00ffcc;
+    font-size:12px;
+    border:1px solid rgba(0,255,204,0.2);
+}
+#sample-list {
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    max-height:360px;
+    overflow:auto;
+    margin-top:16px;
+}
+.sample-item {
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    padding:10px 12px;
+    border-radius:14px;
+    background:rgba(255,255,255,0.06);
+}
+.sample-item span:last-child { color:#00ffcc; font-weight:600; }
+@media (max-width: 900px) {
+    main { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+    <h1 onclick="window.location.href='index.html'"><span>SAM</span>VAAD</h1>
+    <button id="back-btn" onclick="window.location.href='options.html'">Back</button>
+</header>
+
+<main>
+    <section class="panel">
+        <h2>Gesture Recorder</h2>
+        <p class="muted">Show the sign you want to improve, hold it steady, and save 4-5 samples. We’ll use your own landmark data to tune the recognizer around your gestures.</p>
+
+        <div id="camera-shell" class="stack">
+            <video id="camera-video" autoplay playsinline muted></video>
+            <canvas id="landmark-canvas"></canvas>
+        </div>
+
+        <div class="stack">
+            <div class="badge-row">
+                <div class="badge" id="camera-state">Camera off</div>
+                <div class="badge" id="hand-state">No hand detected</div>
+                <div class="badge" id="frame-state">Waiting</div>
+            </div>
+
+            <div class="row">
+                <div class="field">
+                    <label for="gesture-label">Gesture Label</label>
+                    <input id="gesture-label" type="text" placeholder="Examples: A, V, HELLO, 5">
+                </div>
+                <div class="field">
+                    <label for="hand-hint">Hand Hint</label>
+                    <select id="hand-hint">
+                        <option value="">Auto / Unknown</option>
+                        <option value="right">Right hand</option>
+                        <option value="left">Left hand</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="sample-notes">Notes</label>
+                <textarea id="sample-notes" placeholder="Optional: what goes wrong, alternate finger shape, camera angle, etc."></textarea>
+            </div>
+
+            <div class="row">
+                <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#cfe9e3;">
+                    <input id="overwrite-toggle" type="checkbox" checked style="accent-color:#00ffcc;">
+                    Replace old samples for this label on the first new save
+                </label>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-primary" id="toggle-camera-btn">Start Camera</button>
+                <button class="btn btn-primary" id="capture-btn" disabled>Save Current Pose</button>
+                <button class="btn btn-secondary" id="refresh-summary-btn">Refresh Summary</button>
+            </div>
+
+            <div id="status-msg" class="status info">Open the camera, enter a gesture label, and keep one hand clearly visible.</div>
+        </div>
+    </section>
+
+    <aside class="panel">
+        <h2>Recorded Samples</h2>
+        <p class="muted">This saves newline-delimited JSON files in <code>D:\SAMVAAD\dataset\gesture_samples</code>. Capture multiple versions of the same sign so we can tune thresholds against real examples.</p>
+        <div id="sample-list"></div>
+    </aside>
+</main>
+
+<script>
+const cameraVideo = document.getElementById('camera-video');
+const landmarkCanvas = document.getElementById('landmark-canvas');
+const canvasCtx = landmarkCanvas.getContext('2d');
+const cameraState = document.getElementById('camera-state');
+const handState = document.getElementById('hand-state');
+const frameState = document.getElementById('frame-state');
+const statusMsg = document.getElementById('status-msg');
+const labelInput = document.getElementById('gesture-label');
+const handHintInput = document.getElementById('hand-hint');
+const notesInput = document.getElementById('sample-notes');
+const overwriteToggle = document.getElementById('overwrite-toggle');
+const sampleList = document.getElementById('sample-list');
+const toggleCameraBtn = document.getElementById('toggle-camera-btn');
+const captureBtn = document.getElementById('capture-btn');
+
+let cameraActive = false;
+let mediaStream = null;
+let mpCamera = null;
+let latestHand = null;
+const overwrittenLabels = new Set();
+
+function showStatus(message, type='info') {
+    statusMsg.textContent = message;
+    statusMsg.className = `status ${type}`;
+}
+
+function resizeCanvas() {
+    const box = landmarkCanvas.parentElement.getBoundingClientRect();
+    landmarkCanvas.width = box.width;
+    landmarkCanvas.height = box.height;
+}
+
+function setHandState(message) {
+    handState.textContent = message;
+}
+
+function drawResults(results) {
+    resizeCanvas();
+    const width = landmarkCanvas.width;
+    const height = landmarkCanvas.height;
+    canvasCtx.clearRect(0, 0, width, height);
+
+    if (!results.image) return;
+    canvasCtx.save();
+    canvasCtx.translate(width, 0);
+    canvasCtx.scale(-1, 1);
+    canvasCtx.drawImage(results.image, 0, 0, width, height);
+
+    if (results.multiHandLandmarks?.length) {
+        for (const landmarks of results.multiHandLandmarks) {
+            drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: '#00ffcc', lineWidth: 2 });
+            drawLandmarks(canvasCtx, landmarks, { color: '#001a14', fillColor: '#00ffcc', radius: 4 });
+        }
+    }
+    canvasCtx.restore();
+}
+
+const hands = new Hands({
+    locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+});
+
+hands.setOptions({
+    maxNumHands: 1,
+    modelComplexity: 1,
+    minDetectionConfidence: 0.75,
+    minTrackingConfidence: 0.75,
+});
+
+hands.onResults(results => {
+    drawResults(results);
+    const landmarks = results.multiHandLandmarks?.[0];
+    if (!landmarks) {
+        latestHand = null;
+        setHandState('No hand detected');
+        frameState.textContent = 'Waiting';
+        captureBtn.disabled = true;
+        return;
+    }
+
+    latestHand = {
+        landmarks: landmarks.map(lm => ({ x: lm.x, y: lm.y, z: lm.z })),
+        handedness_hint: results.multiHandedness?.[0]?.classification?.[0]?.label?.toLowerCase?.() || '',
+        captured_at: new Date().toISOString(),
+    };
+
+    setHandState(`1 hand detected${latestHand.handedness_hint ? ` (${latestHand.handedness_hint})` : ''}`);
+    frameState.textContent = 'Ready to save';
+    captureBtn.disabled = !labelInput.value.trim();
+});
+
+labelInput.addEventListener('input', () => {
+    captureBtn.disabled = !(cameraActive && latestHand && labelInput.value.trim());
+});
+
+async function toggleCamera() {
+    if (cameraActive) {
+        cameraActive = false;
+        if (mpCamera) { mpCamera.stop(); mpCamera = null; }
+        if (mediaStream) { mediaStream.getTracks().forEach(track => track.stop()); mediaStream = null; }
+        cameraVideo.srcObject = null;
+        latestHand = null;
+        toggleCameraBtn.textContent = 'Start Camera';
+        cameraState.textContent = 'Camera off';
+        setHandState('No hand detected');
+        frameState.textContent = 'Waiting';
+        captureBtn.disabled = true;
+        canvasCtx.clearRect(0, 0, landmarkCanvas.width, landmarkCanvas.height);
+        showStatus('Camera stopped.', 'info');
+        return;
+    }
+
+    try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 960 }, height: { ideal: 720 }, facingMode: 'user' },
+            audio: false,
+        });
+        cameraVideo.srcObject = mediaStream;
+        await new Promise(resolve => {
+            cameraVideo.onloadedmetadata = () => {
+                cameraVideo.play().catch(() => {});
+                resolve();
+            };
+        });
+
+        resizeCanvas();
+        mpCamera = new Camera(cameraVideo, {
+            onFrame: async () => {
+                if (cameraActive) await hands.send({ image: cameraVideo });
+            },
+            width: 960,
+            height: 720,
+        });
+
+        cameraActive = true;
+        await mpCamera.start();
+        toggleCameraBtn.textContent = 'Stop Camera';
+        cameraState.textContent = 'Camera on';
+        showStatus('Camera is live. Hold one sign steadily, then click "Save Current Pose".', 'success');
+    } catch (error) {
+        console.error(error);
+        showStatus('Could not access the camera.', 'error');
+    }
+}
+
+async function saveCurrentPose() {
+    if (!latestHand) {
+        showStatus('No hand is ready to save yet.', 'error');
+        return;
+    }
+
+    const label = labelInput.value.trim();
+    if (!label) {
+        showStatus('Enter a gesture label first.', 'error');
+        return;
+    }
+
+    const payload = {
+        label,
+        handedness_hint: handHintInput.value || latestHand.handedness_hint || '',
+        captured_at: latestHand.captured_at,
+        notes: notesInput.value.trim(),
+        landmarks: latestHand.landmarks,
+        overwrite: overwriteToggle.checked && !overwrittenLabels.has(label),
+    };
+
+    try {
+        const response = await fetch('/api/gesture-samples', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Could not save sample');
+
+        if (data.overwrite) overwrittenLabels.add(data.label);
+        showStatus(`Saved sample ${data.count} for "${data.label}". Current guesses: right=${data.right_guess || '-'} left=${data.left_guess || '-'}`, 'success');
+        await loadSummary();
+    } catch (error) {
+        console.error(error);
+        showStatus(error.message || 'Could not save sample.', 'error');
+    }
+}
+
+async function loadSummary() {
+    try {
+        const response = await fetch('/api/gesture-samples/summary');
+        const data = await response.json();
+        const samples = data.samples || {};
+        const entries = Object.entries(samples);
+
+        if (!entries.length) {
+            sampleList.innerHTML = '<div class="sample-item"><span>No samples yet</span><span>0</span></div>';
+            return;
+        }
+
+        sampleList.innerHTML = entries
+            .map(([label, count]) => `<div class="sample-item"><span>${label}</span><span>${count}</span></div>`)
+            .join('');
+    } catch (error) {
+        console.error(error);
+        sampleList.innerHTML = '<div class="sample-item"><span>Could not load summary</span><span>!</span></div>';
+    }
+}
+
+toggleCameraBtn.addEventListener('click', toggleCamera);
+captureBtn.addEventListener('click', saveCurrentPose);
+document.getElementById('refresh-summary-btn').addEventListener('click', loadSummary);
+window.addEventListener('resize', () => { if (cameraActive) resizeCanvas(); });
+window.addEventListener('DOMContentLoaded', loadSummary);
+</script>
+
+</body>
+</html>

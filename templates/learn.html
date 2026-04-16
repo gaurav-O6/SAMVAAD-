@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SAMVAAD | Learn Mode</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
 
@@ -20,272 +18,300 @@ body {
     padding-bottom:40px;
 }
 
-/* HEADER */
 header {
-    width: 100%;
-    padding: 20px 60px;
-    display:flex;
-    justify-content: space-between;
-    align-items:center;
-    animation: fadeIn 0.8s ease-out;
+    width:100%; padding:20px 60px;
+    display:flex; justify-content:space-between; align-items:center;
+    animation:fadeIn 0.8s ease-out;
 }
-
-header h1 { 
-    font-size:28px; 
-    font-weight:600; 
-    cursor:pointer;
-    transition: transform 0.3s;
-}
-header h1:hover {
-    transform: scale(1.05);
-}
+header h1 { font-size:28px; font-weight:600; cursor:pointer; transition:transform 0.3s; }
+header h1:hover { transform:scale(1.05); }
 header span { color:#00ffcc; }
 
-/* BACK BUTTON */
 #back-btn {
-    padding: 6px 20px;
-    border-radius: 30px;
-    border: none;
-    font-size: 22px;
-    font-weight: 600;
-    cursor: pointer;
-    background: #00ffcc;
-    color: #000;
-    transition: all 0.3s;
+    padding:6px 20px; border-radius:30px; border:none;
+    font-size:22px; font-weight:600; cursor:pointer;
+    background:#00ffcc; color:#000; transition:all 0.3s;
 }
-#back-btn:hover {
-    background: #00ddb3;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,255,204,0.4);
-}
+#back-btn:hover { background:#00ddb3; transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,255,204,0.4); }
 
-/* RESET BUTTON (appears when in learning mode) */
 #reset-btn {
-    display: none;
-    padding: 8px 24px;
-    border-radius: 30px;
-    border: 2px solid #00ffcc;
-    background: transparent;
-    color: #00ffcc;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
+    display:none; padding:8px 24px; border-radius:30px;
+    border:2px solid #00ffcc; background:transparent;
+    color:#00ffcc; font-size:14px; font-weight:600;
+    cursor:pointer; transition:all 0.3s;
 }
-#reset-btn:hover {
-    background: #00ffcc;
-    color: #000;
-}
+#reset-btn:hover { background:#00ffcc; color:#000; }
 
-/* SUBTITLE */
-#subtitle {
-    margin: 10px 0 20px;
-    font-size:18px;
-    color: #aaa;
-    text-align:center;
-    animation: fadeInUp 1s ease-out;
-}
+#subtitle { margin:10px 0 20px; font-size:18px; color:#aaa; text-align:center; animation:fadeInUp 1s ease-out; }
 
-/* MODE CARDS */
-#mode-selection {
-    display:flex;
-    gap:40px;
-    margin:40px 0;
-    flex-wrap: wrap;
-    justify-content:center;
-    width: 90%;
-}
+#mode-selection { display:flex; gap:40px; margin:40px 0; flex-wrap:wrap; justify-content:center; width:90%; }
 
-.mode-wrapper{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:10px;
-    cursor:pointer;
-    animation: fadeInUp 1.2s ease-out;
-}
+.mode-wrapper { display:flex; flex-direction:column; align-items:center; gap:10px; cursor:pointer; animation:fadeInUp 1.2s ease-out; }
 
 .mode-card {
-    width:240px;
-    height:180px;
-    background: rgba(24, 10, 10, 0.08);
-    border: 2px solid #00ffcc;
-    border-radius:20px;
-    overflow:hidden;
-    transition:0.3s;
-    box-shadow: 0 0 20px rgba(0,255,204,0.2);
+    width:240px; height:180px; background:rgba(24,10,10,0.08);
+    border:2px solid #00ffcc; border-radius:20px; overflow:hidden;
+    transition:0.3s; box-shadow:0 0 20px rgba(0,255,204,0.2);
 }
-.mode-card:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 30px rgba(0,255,204,0.6);
+.mode-card:hover { transform:scale(1.05); box-shadow:0 0 30px rgba(0,255,204,0.6); }
+.mode-card img { width:100%; height:100%; object-fit:cover; }
+.mode-wrapper span { font-size:18px; font-weight:600; }
+
+#creators { width:90%; max-width:1200px; margin:30px 0; text-align:center; animation:fadeInUp 1.4s ease-out; }
+#creators h2 { color:#00ffcc; margin-bottom:20px; font-size:26px; }
+.creator-grid { display:flex; justify-content:center; gap:40px; flex-wrap:wrap; }
+.creator { display:flex; flex-direction:column; align-items:center; cursor:pointer; transition:0.3s; }
+.creator img { width:100px; height:140px; border-radius:15px; border:3px solid #00ffcc; object-fit:cover; transition:0.3s; }
+.creator span { margin-top:10px; font-weight:600; }
+.creator:hover { transform:translateY(-5px) scale(1.05); }
+.creator:hover img { box-shadow:0 0 20px rgba(0,255,204,0.6); }
+
+/* ── SHARED CAROUSEL ── */
+.learn-carousel {
+    display:none; flex-direction:column; align-items:center;
+    width:90%; max-width:600px; margin:10px 0; animation:fadeInUp 0.6s ease-out;
 }
 
-.mode-card img {
-    width:100%;
-    height:100%;
-    object-fit:cover;
+.carousel-tabs { display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; justify-content:center; }
+.tab-btn {
+    padding:8px 24px; border-radius:25px;
+    border:2px solid rgba(0,255,204,0.4); background:transparent;
+    color:rgba(0,255,204,0.7); font-size:13px; font-weight:600;
+    font-family:'Poppins',sans-serif; cursor:pointer; transition:all 0.25s;
+}
+.tab-btn:hover { border-color:#00ffcc; color:#00ffcc; background:rgba(0,255,204,0.08); }
+.tab-btn.active { background:#00ffcc; border-color:#00ffcc; color:#000; box-shadow:0 0 12px rgba(0,255,204,0.4); }
+
+.item-label {
+    font-size:2rem; font-weight:700; color:#00ffcc;
+    letter-spacing:0.12em; text-transform:uppercase;
+    text-shadow:0 0 8px rgba(0,255,204,0.8), 0 0 20px rgba(0,255,204,0.4);
+    margin-bottom:12px; min-height:2.5rem;
 }
 
-.mode-wrapper span {
-    font-size:18px;
-    font-weight:600;
+/* ── SIGN AVATAR BOX ── */
+#learn-avatar-box {
+    width:100%; height:380px; border-radius:20px;
+    background:rgba(255,255,255,0.05); backdrop-filter:blur(12px);
+    position:relative; border:2px solid #00ffcc;
+    box-shadow:0 0 20px rgba(0,255,204,0.4); overflow:hidden;
+}
+#learn-avatar-loading {
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    background:rgba(0,0,0,0.5); z-index:10; gap:12px;
+}
+#learn-avatar-loading .spinner {
+    border:3px solid rgba(0,255,204,0.2); border-top:3px solid #00ffcc;
+    border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite;
+}
+#learn-avatar-loading span { font-size:13px; color:#00ffcc; opacity:0.8; }
+
+/* ── BRAILLE DOT BOX ── */
+#braille-image-box {
+    width:100%; height:380px; border-radius:20px;
+    background:rgba(255,255,255,0.05); backdrop-filter:blur(12px);
+    border:2px solid #00ffcc; box-shadow:0 0 20px rgba(0,255,204,0.4);
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden; position:relative;
 }
 
-/* ===== MEET THE CREATORS ===== */
-#creators {
-    width: 90%;
-    max-width: 1200px;
-    margin: 30px 0;
-    text-align: center;
-    animation: fadeInUp 1.4s ease-out;
-}
-#creators h2 { color:#00ffcc; margin-bottom: 20px; font-size:26px; }
-
-.creator-grid {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    flex-wrap: wrap;
+/* ── BRAILLE TWO-CELL LAYOUT ── */
+#braille-cell-wrap {
+    display:flex; align-items:center; justify-content:center;
+    gap:40px; flex-wrap:wrap;
 }
 
-.creator {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.creator img {
-    width: 100px;
-    height: 140px;
-    border-radius: 15px;
-    border: 3px solid #00ffcc;
-    object-fit: cover;
-    transition: 0.3s;
-}
-
-.creator span { margin-top: 10px; font-weight: 600; }
-
-.creator:hover {
-    transform: translateY(-5px) scale(1.05);
-}
-
-.creator:hover img {
-    box-shadow: 0 0 20px rgba(0,255,204,0.6);
-}
-
-/* SECTIONS */
-.section {
-    width: 90%;
-    max-width: 1200px;
-    margin: 40px 0;
-    animation: fadeInUp 1s ease-out;
-}
-.section h2 {
-    margin-bottom: 20px;
-    color:#00ffcc;
-    font-size:26px;
-    text-align:center;
-}
-
-/* GRID DISPLAY */
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 25px;
-    justify-items: center;
-}
-
-.grid-item {
-    width: 140px;
-    background: rgba(255,255,255,0.05);
-    border: 2px solid #00ffcc;
-    border-radius: 25px;
-    padding: 15px;
-    text-align:center;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    transition: all 0.3s;
-    cursor: pointer;
-}
-
-.grid-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0,255,204,0.4);
-    background: rgba(255,255,255,0.1);
-}
-
-.grid-item img {
-    max-width: 80px;
-    max-height: 80px;
-    margin-bottom: 10px;
-    object-fit: contain;
-}
-.grid-item span {
-    font-size:16px;
-    font-weight:500;
-}
-
-/* FOOTER */
-footer {
-    text-align:center;
-    padding:20px;
-    font-size:12px;
+#braille-num-indicator {
+    display:flex; flex-direction:column; align-items:center; gap:10px;
     opacity:0.7;
-    line-height: 1.6;
 }
 
-footer strong {
-    color: #00ffcc;
+#braille-main-cell {
+    display:flex; flex-direction:column; align-items:center; gap:10px;
 }
 
-/* Animations */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+.braille-cell-label {
+    font-size:11px; font-weight:600; letter-spacing:1.5px;
+    text-transform:uppercase; color:rgba(0,255,204,0.5);
 }
 
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.braille-cell {
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows:    repeat(3, 1fr);
+    gap:18px;
+    padding:14px;
+    transition: opacity 0.18s ease;
 }
 
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-    .grid {
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 15px;
-    }
-    
-    .grid-item {
-        width: 120px;
-    }
-    
-    .mode-card {
-        width: 200px;
-        height: 150px;
-    }
-    
-    .creator-grid {
-        gap: 25px;
-    }
+.braille-cell.fading { opacity:0; }
+
+.braille-dot {
+    position:relative;
+    width:52px; height:52px; border-radius:50%;
+    background: rgba(255,255,255,0.07);
+    border: 2px solid rgba(255,255,255,0.12);
+    transition: background 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
+.dot-number {
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+    font-size:14px;
+    font-weight:700;
+    color:rgba(255,255,255,0.72);
+    text-shadow:0 0 10px rgba(0,0,0,0.35);
+    pointer-events:none;
+}
+.braille-dot.active {
+    background: #00ffcc;
+    border-color: #00ffcc;
+    box-shadow:
+        0 0 10px rgba(0,255,204,0.8),
+        0 0 24px rgba(0,255,204,0.5),
+        0 0 48px rgba(0,255,204,0.25);
+}
+.braille-dot.active .dot-number { color:#032821; text-shadow:none; }
+
+/* Number indicator cell — slightly smaller dots, dimmer glow */
+#braille-num-indicator .braille-dot { width:40px; height:40px; }
+#braille-num-indicator .braille-dot.active {
+    box-shadow: 0 0 8px rgba(0,255,204,0.6), 0 0 18px rgba(0,255,204,0.3);
+}
+
+@media (max-width:768px) {
+    .braille-dot { width:40px; height:40px; }
+    #braille-num-indicator .braille-dot { width:32px; height:32px; }
+    .braille-cell { gap:14px; padding:10px; }
+    #braille-cell-wrap { gap:24px; }
+}
+
+/* ── NAV ── */
+.carousel-nav { display:flex; align-items:center; gap:24px; margin-top:16px; }
+.braille-practice-panel {
+    display:none;
+    width:100%;
+    margin-top:18px;
+    padding:18px;
+    border:1px solid rgba(0,255,204,0.24);
+    border-radius:20px;
+    background:rgba(255,255,255,0.05);
+    box-shadow:0 0 20px rgba(0,255,204,0.12);
+}
+.braille-practice-panel.visible { display:block; }
+.practice-head {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    flex-wrap:wrap;
+    margin-bottom:14px;
+}
+.practice-title {
+    font-size:16px;
+    font-weight:600;
+    color:#00ffcc;
+}
+.practice-score {
+    font-size:13px;
+    color:rgba(255,255,255,0.72);
+}
+.practice-prompt {
+    font-size:18px;
+    line-height:1.5;
+    margin-bottom:16px;
+    color:white;
+}
+.practice-actions {
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+}
+.practice-btn {
+    padding:10px 16px;
+    border-radius:18px;
+    border:1px solid rgba(0,255,204,0.28);
+    background:transparent;
+    color:#d6fff6;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition:all 0.2s ease;
+}
+.practice-btn:hover {
+    border-color:#00ffcc;
+    color:#00ffcc;
+    background:rgba(0,255,204,0.08);
+}
+.practice-btn.correct {
+    background:#00ffcc;
+    border-color:#00ffcc;
+    color:#032821;
+}
+.practice-btn.wrong {
+    border-color:#ff7d7d;
+    color:#ffb1b1;
+}
+.practice-feedback {
+    min-height:22px;
+    margin-top:14px;
+    font-size:14px;
+    color:rgba(255,255,255,0.82);
+}
+.practice-next {
+    margin-top:14px;
+    display:none;
+}
+.practice-next.visible { display:inline-flex; }
+.nav-btn {
+    width:48px; height:48px; border-radius:50%;
+    border:2px solid #00ffcc; background:transparent; color:#00ffcc;
+    font-size:20px; cursor:pointer; transition:all 0.25s;
+    display:flex; align-items:center; justify-content:center;
+}
+.nav-btn:hover { background:#00ffcc; color:#000; box-shadow:0 0 12px rgba(0,255,204,0.5); }
+.nav-btn:disabled { opacity:0.2; cursor:not-allowed; }
+.nav-btn:disabled:hover { background:transparent; color:#00ffcc; box-shadow:none; }
+
+.carousel-counter { font-size:14px; color:rgba(255,255,255,0.5); min-width:60px; text-align:center; }
+
+.quick-jump { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:16px; max-width:580px; }
+.jump-btn {
+    padding:5px 13px; border-radius:20px;
+    border:1px solid rgba(0,255,204,0.3); background:transparent;
+    color:rgba(0,255,204,0.6); font-size:12px; font-weight:600;
+    font-family:'Poppins',sans-serif; cursor:pointer; transition:all 0.2s;
+}
+.jump-btn:hover { border-color:#00ffcc; color:#00ffcc; background:rgba(0,255,204,0.08); }
+.jump-btn.active { background:#00ffcc; border-color:#00ffcc; color:#000; }
+
+.drag-hint { font-size:11px; color:rgba(0,255,204,0.4); margin-top:8px; letter-spacing:0.5px; }
+
+footer { text-align:center; padding:20px; font-size:12px; opacity:0.7; line-height:1.6; }
+footer strong { color:#00ffcc; }
+
+@keyframes fadeIn    { from{opacity:0} to{opacity:1} }
+@keyframes fadeInUp  { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+@keyframes spin      { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+
+@media (max-width:768px) {
+    #learn-avatar-box, #braille-image-box { height:300px; }
+    .mode-card { width:200px; height:150px; }
+    .creator-grid { gap:25px; }
+    .practice-head { align-items:flex-start; }
+}
+
+::-webkit-scrollbar { display:none; }
+* { scrollbar-width:none; }
 </style>
 </head>
 <body>
 
 <header>
     <h1 onclick="window.location.href='index.html'"><span>SAM</span>VAAD</h1>
-    <div style="display: flex; gap: 10px;">
+    <div style="display:flex;gap:10px;">
         <button id="reset-btn" onclick="resetMode()">↻ Change Mode</button>
         <button id="back-btn" onclick="window.location.href='options.html'">←</button>
     </div>
@@ -293,159 +319,475 @@ footer strong {
 
 <div id="subtitle">Choose what you want to learn</div>
 
-<!-- Mode Cards -->
 <div id="mode-selection">
     <div class="mode-wrapper" onclick="setMode('sign')">
-        <div class="mode-card">
-            <img src="images/sign_icon.png" alt="Sign Language">
-        </div>
+        <div class="mode-card"><img src="images/sign_icon.png" alt="Sign Language"></div>
         <span>Learn Sign Language</span>
     </div>
-
     <div class="mode-wrapper" onclick="setMode('braille')">
-        <div class="mode-card">
-            <img src="images/braille_icon.png" alt="Braille">
-        </div>
+        <div class="mode-card"><img src="images/braille_icon.png" alt="Braille"></div>
         <span>Learn Braille</span>
     </div>
 </div>
 
-<!-- Meet the Creators -->
 <div id="creators">
     <h2>Meet the Creators</h2>
     <div class="creator-grid">
-        <div class="creator" onclick="window.location.href='gaurav.html'">
-            <img src="images/gaurav.png" alt="Gaurav"><span>Gaurav</span>
-        </div>
-        <div class="creator" onclick="window.location.href='priyanka.html'">
-            <img src="images/priyanka.png" alt="Priyanka"><span>Priyanka</span>
-        </div>
-        <div class="creator" onclick="window.location.href='krushnal.html'">
-            <img src="images/krushnal.png" alt="Krushnal"><span>Krushnal</span>
-        </div>
-        <div class="creator" onclick="window.location.href='shreya.html'">
-            <img src="images/shreya.png" alt="Shreya"><span>Shreya</span>
-        </div>
+        <div class="creator" onclick="window.location.href='gaurav.html'"><img src="images/gaurav.png" alt="Gaurav"><span>Gaurav</span></div>
+        <div class="creator" onclick="window.location.href='priyanka.html'"><img src="images/priyanka.png" alt="Priyanka"><span>Priyanka</span></div>
+        <div class="creator" onclick="window.location.href='krushnal.html'"><img src="images/krushnal.png" alt="Krushnal"><span>Krushnal</span></div>
+        <div class="creator" onclick="window.location.href='shreya.html'"><img src="images/shreya.png" alt="Shreya"><span>Shreya</span></div>
     </div>
 </div>
 
-<!-- Learning Content -->
-<div id="learning-content"></div>
+<!-- ══════════ SIGN CAROUSEL ══════════ -->
+<div id="sign-carousel" class="learn-carousel">
+    <div class="carousel-tabs" id="sign-tabs">
+        <button class="tab-btn active" onclick="signSwitch('alphabets')">Alphabets</button>
+        <button class="tab-btn"        onclick="signSwitch('numbers')">Numbers</button>
+        <button class="tab-btn"        onclick="signSwitch('common')">Common Gestures</button>
+    </div>
+
+    <div class="item-label" id="sign-label">A</div>
+
+    <div id="learn-avatar-box">
+        <div id="learn-avatar-loading">
+            <div class="spinner"></div>
+            <span>Loading avatar...</span>
+        </div>
+    </div>
+
+    <div class="carousel-nav">
+        <button class="nav-btn" id="sign-prev" onclick="signNav(-1)" disabled>&#8592;</button>
+        <span class="carousel-counter" id="sign-counter">1 / 26</span>
+        <button class="nav-btn" id="sign-next" onclick="signNav(1)">&#8594;</button>
+    </div>
+    <div class="quick-jump" id="sign-jump"></div>
+    <div class="drag-hint">⟵ drag to rotate ⟶</div>
+</div>
+
+<!-- ══════════ BRAILLE CAROUSEL ══════════ -->
+<div id="braille-carousel" class="learn-carousel">
+    <div class="carousel-tabs" id="braille-tabs">
+        <button class="tab-btn active" onclick="brailleSwitch('alphabets')">Alphabets</button>
+        <button class="tab-btn"        onclick="brailleSwitch('numbers')">Numbers</button>
+        <button class="tab-btn"        onclick="brailleSwitch('practice')">Practice</button>
+    </div>
+
+    <div class="item-label" id="braille-label">A</div>
+
+    <div id="braille-image-box">
+        <div id="braille-cell-wrap">
+            <div id="braille-num-indicator" style="display:none">
+                <div class="braille-cell-label">Number Sign</div>
+                <div id="braille-num-grid" class="braille-cell"></div>
+            </div>
+            <div id="braille-main-cell">
+                <div class="braille-cell-label" id="braille-cell-title">Letter</div>
+                <div id="braille-grid" class="braille-cell"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="carousel-nav">
+        <button class="nav-btn" id="braille-prev" onclick="brailleNav(-1)" disabled>&#8592;</button>
+        <span class="carousel-counter" id="braille-counter">1 / 26</span>
+        <button class="nav-btn" id="braille-next" onclick="brailleNav(1)">&#8594;</button>
+    </div>
+    <div class="quick-jump" id="braille-jump"></div>
+
+    <div id="braille-practice-panel" class="braille-practice-panel">
+        <div class="practice-head">
+            <div class="practice-title">Practice Braille</div>
+            <div class="practice-score" id="braille-practice-score">Score: 0 / 0</div>
+        </div>
+        <div class="practice-prompt" id="braille-practice-prompt">Identify the Braille character shown above.</div>
+        <div class="practice-actions" id="braille-practice-actions"></div>
+        <div class="practice-feedback" id="braille-practice-feedback"></div>
+        <button class="action practice-next" id="braille-practice-next" onclick="nextBrailleQuestion()">Next Question</button>
+    </div>
+</div>
 
 <footer>
-    <strong>SAMVAAD</strong> — Sign and Multimodal Voice Assistive Access & Dialogue<br>
+    <strong>SAMVAAD</strong> — Sign and Multimodal Voice Assistive Access &amp; Dialogue<br>
     © 2026 Final Year Engineering Project
 </footer>
 
+<script src="avatar.js"></script>
 <script>
-const data = {
-    sign: {
-        alphabets: Array.from({length:26}, (_,i)=>({
-            label:String.fromCharCode(65+i), 
-            img:`images/sign_${String.fromCharCode(65+i)}.gif`
-        })),
-        numbers: Array.from({length:10}, (_,i)=>({
-            label:i.toString(), 
-            img:`images/sign_${i}.gif`
-        })),
-        common: [
-            {label:'Thank You', img:'images/sign_thankyou.gif'},
-            {label:'Sorry', img:'images/sign_sorry.gif'},
-            {label:'Welcome', img:'images/sign_welcome.gif'},
-            {label:'I Love You', img:'images/sign_iloveyou.gif'} // FIXED: was braille_iloveyou.png
-        ]
-    },
-    braille: {
-        alphabets: Array.from({length:26}, (_,i)=>({
-            label:String.fromCharCode(65+i), 
-            img:`images/braille_${String.fromCharCode(65+i)}.png`
-        })),
-        numbers: Array.from({length:10}, (_,i)=>({
-            label:i.toString(), 
-            img:`images/braille_${i}.png`
-        })),
-        common: [
-            {label:'Thank You', img:'images/braille_thankyou.png'},
-            {label:'Sorry', img:'images/braille_sorry.png'},
-            {label:'Welcome', img:'images/braille_welcome.png'},
-            {label:'I Love You', img:'images/braille_iloveyou.png'}
-        ]
-    }
+
+/* ╔══════════════════════════════════════════════════════════╗
+   ║  ADD CUSTOM COMMON GESTURES HERE (sign language)        ║
+   ║  Format: { label: 'Display Name', key: 'avatarKey' }    ║
+   ║  'key' is whatever SAMVAADAvatar.convertToSign() needs  ║
+   ╚══════════════════════════════════════════════════════════╝ */
+const SIGN_COMMON = [
+    { label: 'Hello', key: 'hello' },
+    { label: 'Yes',   key: 'yes'   },
+    { label: 'No',    key: 'no'    },
+    { label: 'Stop',  key: 'stop'  },
+    // ── Add more below when you have the animations ready ──
+    // { label: 'Thank You', key: 'thankyou' },
+    // { label: 'Sorry',     key: 'sorry'    },
+    // { label: 'Please',    key: 'please'   },
+];
+
+const SIGN_COMMON_LABELS = {
+    thankyou: 'Thank You',
+    friend: 'Friend',
+    sorry: 'Sorry',
 };
 
-let mode = null;
+/* ══════════════════════════════════════════════════════════
+   BRAILLE MAP  —  Standard 6-dot encoding (Grade 1 / UEB)
+   Array order: [d1=TL, d4=TR, d2=ML, d5=MR, d3=BL, d6=BR]
+   ══════════════════════════════════════════════════════════ */
+const BRAILLE_MAP = {
+    // ── Alphabets (Grade 1 / UEB standard) ──
+    'A':[1,0,0,0,0,0], 'B':[1,0,1,0,0,0], 'C':[1,1,0,0,0,0],
+    'D':[1,1,0,1,0,0], 'E':[1,0,0,1,0,0], 'F':[1,1,1,0,0,0],
+    'G':[1,1,1,1,0,0], 'H':[1,0,1,1,0,0], 'I':[0,1,1,0,0,0],
+    'J':[0,1,1,1,0,0], 'K':[1,0,0,0,1,0], 'L':[1,0,1,0,1,0],
+    'M':[1,1,0,0,1,0], 'N':[1,1,0,1,1,0], 'O':[1,0,0,1,1,0],
+    'P':[1,1,1,0,1,0], 'Q':[1,1,1,1,1,0], 'R':[1,0,1,1,1,0],
+    'S':[0,1,1,0,1,0], 'T':[0,1,1,1,1,0], 'U':[1,0,0,0,1,1],
+    'V':[1,0,1,0,1,1], 'W':[0,1,1,1,0,1], 'X':[1,1,0,0,1,1],
+    'Y':[1,1,0,1,1,1], 'Z':[1,0,0,1,1,1],
+    // ── Digits 0–9 (same cell as J, A–I respectively) ──
+    // In real Braille these are preceded by the number indicator (dots 3,4,5,6)
+    // which is rendered separately in the UI to make the distinction clear.
+    '0':[0,1,1,1,0,0],  // = J
+    '1':[1,0,0,0,0,0],  // = A
+    '2':[1,0,1,0,0,0],  // = B
+    '3':[1,1,0,0,0,0],  // = C
+    '4':[1,1,0,1,0,0],  // = D
+    '5':[1,0,0,1,0,0],  // = E
+    '6':[1,1,1,0,0,0],  // = F
+    '7':[1,1,1,1,0,0],  // = G
+    '8':[1,0,1,1,0,0],  // = H
+    '9':[0,1,1,0,0,0],  // = I
+};
 
-function setMode(selectedMode){
-    mode = selectedMode;
-    document.getElementById('mode-selection').style.display = 'none';
-    document.getElementById('subtitle').style.display = 'none';
-    document.getElementById('creators').style.display = 'none';
+// Number indicator cell — dots 3,4,5,6 → array positions [d3=BL, d6=BR, d4=TR, d5=MR]
+// Array order [d1,d4,d2,d5,d3,d6] → dots 3,4,5,6 = [0,1,0,1,1,1]
+const NUM_INDICATOR = [0,1,0,1,1,1];
+
+/* ─── Data tables ─── */
+const SIGN_DATA = {
+    alphabets: Array.from({length:26}, (_,i) => ({ label: String.fromCharCode(65+i), key: String.fromCharCode(65+i) })),
+    numbers:   Array.from({length:10}, (_,i) => ({ label: String(i+1), key: String(i+1) })),
+    common:    [...SIGN_COMMON]
+};
+
+const BRAILLE_DATA = {
+    alphabets: Array.from({length:26}, (_,i) => {
+        const c = String.fromCharCode(65+i);
+        return { label: c, dots: BRAILLE_MAP[c] };
+    }),
+    // 0 first, then 1–9
+    numbers: ['0','1','2','3','4','5','6','7','8','9'].map(n => ({
+        label: n, dots: BRAILLE_MAP[n]
+    })),
+};
+
+const BRAILLE_PRACTICE_POOL = [
+    ...BRAILLE_DATA.alphabets.map(item => ({ ...item, type: 'letter' })),
+    ...BRAILLE_DATA.numbers.map(item => ({ ...item, type: 'number' })),
+];
+
+/* ─── Shared helpers ─── */
+function setMode(mode) {
+    ['mode-selection','subtitle','creators'].forEach(id =>
+        document.getElementById(id).style.display = 'none');
     document.getElementById('reset-btn').style.display = 'block';
-    renderContent();
+    if (mode === 'sign') {
+        document.getElementById('sign-carousel').style.display = 'flex';
+        initAvatar();
+    } else {
+        document.getElementById('braille-carousel').style.display = 'flex';
+        brailleSwitch('alphabets');
+    }
 }
 
 function resetMode() {
-    mode = null;
-    document.getElementById('mode-selection').style.display = 'flex';
-    document.getElementById('subtitle').style.display = 'block';
-    document.getElementById('creators').style.display = 'block';
-    document.getElementById('reset-btn').style.display = 'none';
-    document.getElementById('learning-content').innerHTML = '';
+    ['mode-selection','subtitle','creators'].forEach(id =>
+        document.getElementById(id).style.display = id === 'mode-selection' ? 'flex' : 'block');
+    document.getElementById('reset-btn').style.display    = 'none';
+    document.getElementById('sign-carousel').style.display   = 'none';
+    document.getElementById('braille-carousel').style.display= 'none';
 }
 
-function renderContent(){
-    if(!mode) return;
-    const container = document.getElementById('learning-content');
-    container.innerHTML = '';
-
-    const sections = ['alphabets','numbers','common'];
-    const titles = {
-        alphabets:'Alphabets', 
-        numbers:'Numbers', 
-        common:'Common Gestures/Words'
-    };
-
-    sections.forEach(section=>{
-        const secDiv = document.createElement('div');
-        secDiv.className = 'section';
-
-        const h2 = document.createElement('h2');
-        h2.textContent = titles[section];
-        secDiv.appendChild(h2);
-
-        const grid = document.createElement('div');
-        grid.className = 'grid';
-
-        data[mode][section].forEach(item=>{
-            const box = document.createElement('div');
-            box.className = 'grid-item';
-
-            const img = document.createElement('img');
-            img.src = item.img;
-            img.alt = item.label;
-            img.onerror = function() {
-                // Fallback if image doesn't exist
-                this.style.display = 'none';
-                const placeholder = document.createElement('div');
-                placeholder.textContent = '?';
-                placeholder.style.fontSize = '48px';
-                placeholder.style.color = '#666';
-                box.insertBefore(placeholder, label);
-            };
-
-            const label = document.createElement('span');
-            label.textContent = item.label;
-
-            box.appendChild(img);
-            box.appendChild(label);
-            grid.appendChild(box);
-        });
-
-        secDiv.appendChild(grid);
-        container.appendChild(secDiv);
+function buildJump(containerId, items, current, onJump) {
+    const c = document.getElementById(containerId);
+    c.innerHTML = '';
+    items.forEach((item, idx) => {
+        const btn = document.createElement('button');
+        btn.className   = 'jump-btn' + (idx === current ? ' active' : '');
+        btn.textContent = item.label;
+        btn.onclick     = () => onJump(idx);
+        c.appendChild(btn);
     });
 }
-</script>
 
+function syncJump(containerId, current) {
+    document.querySelectorAll(`#${containerId} .jump-btn`)
+            .forEach((btn, i) => btn.classList.toggle('active', i === current));
+}
+
+/* ─── SIGN carousel ─── */
+let signSection = 'alphabets', signIdx = 0, avatarReady = false;
+
+function titleCaseWords(value) {
+    return String(value || '')
+        .replace(/[_-]+/g, ' ')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+        .join(' ');
+}
+
+function mergeCommonGestures(extraGestures = []) {
+    const merged = new Map();
+
+    [...SIGN_COMMON, ...extraGestures].forEach(item => {
+        if (!item || !item.key) return;
+        const key = String(item.key).trim().toLowerCase();
+        if (!key) return;
+        const label = SIGN_COMMON_LABELS[key] || item.label || titleCaseWords(key);
+        merged.set(key, { label, key });
+    });
+
+    SIGN_DATA.common = Array.from(merged.values())
+        .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+async function loadCommonGestures() {
+    mergeCommonGestures();
+
+    try {
+        const response = await fetch('/api/learn/common-gestures', { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const payload = await response.json();
+        mergeCommonGestures(Array.isArray(payload.gestures) ? payload.gestures : []);
+    } catch (error) {
+        console.warn('Could not load common gesture animations:', error);
+    }
+}
+
+async function initAvatar() {
+    if (avatarReady) { signPlay(); return; }
+    try {
+        await loadCommonGestures();
+        await SAMVAADAvatar.init({
+            containerId:      'learn-avatar-box',
+            loadingId:        'learn-avatar-loading',
+            animationsFolder: 'animations/',
+            baseAnimation:    'A'
+        });
+        avatarReady = SAMVAADAvatar.isReady();
+    } catch(e) {
+        console.warn('Avatar init failed:', e);
+        document.getElementById('learn-avatar-loading').style.display = 'none';
+    }
+    signSwitch('alphabets');
+}
+
+function signSwitch(section) {
+    signSection = section; signIdx = 0;
+    document.querySelectorAll('#sign-tabs .tab-btn').forEach((btn, i) =>
+        btn.classList.toggle('active', ['alphabets','numbers','common'][i] === section));
+    buildJump('sign-jump', SIGN_DATA[section], 0, i => { signIdx = i; signRefresh(); signPlay(); });
+    signRefresh(); signPlay();
+}
+
+function signNav(dir) {
+    const len = SIGN_DATA[signSection].length;
+    signIdx = Math.max(0, Math.min(len-1, signIdx+dir));
+    signRefresh(); signPlay();
+}
+
+function signRefresh() {
+    const items = SIGN_DATA[signSection], len = items.length;
+    document.getElementById('sign-label').textContent   = items[signIdx].label;
+    document.getElementById('sign-counter').textContent = `${signIdx+1} / ${len}`;
+    document.getElementById('sign-prev').disabled       = signIdx === 0;
+    document.getElementById('sign-next').disabled       = signIdx === len-1;
+    syncJump('sign-jump', signIdx);
+}
+
+function signPlay() {
+    if (!avatarReady) return;
+    SAMVAADAvatar.playLearnSign(SIGN_DATA[signSection][signIdx].key);
+}
+
+document.addEventListener('keydown', e => {
+    if (document.getElementById('sign-carousel').style.display === 'none') return;
+    if (e.key === 'ArrowRight') signNav(1);
+    if (e.key === 'ArrowLeft')  signNav(-1);
+});
+
+/* ─── BRAILLE carousel ─── */
+let brailleSection = 'alphabets', brailleIdx = 0;
+let braillePractice = {
+    current: null,
+    options: [],
+    total: 0,
+    correct: 0,
+    answered: false,
+};
+
+function brailleSwitch(section) {
+    brailleSection = section; brailleIdx = 0;
+    document.querySelectorAll('#braille-tabs .tab-btn').forEach((btn, i) =>
+        btn.classList.toggle('active', ['alphabets','numbers','practice'][i] === section));
+    if (section === 'practice') {
+        startBraillePractice();
+        return;
+    }
+    document.getElementById('braille-practice-panel').classList.remove('visible');
+    document.querySelector('#braille-carousel .carousel-nav').style.display = 'flex';
+    document.getElementById('braille-jump').style.display = 'flex';
+    buildJump('braille-jump', BRAILLE_DATA[section], 0, i => { brailleIdx = i; brailleRefresh(); });
+    brailleRefresh();
+}
+
+function brailleNav(dir) {
+    if (brailleSection === 'practice') return;
+    const len = BRAILLE_DATA[brailleSection].length;
+    brailleIdx = Math.max(0, Math.min(len-1, brailleIdx+dir));
+    brailleRefresh();
+}
+
+function brailleRefresh() {
+    if (brailleSection === 'practice') return;
+    const items = BRAILLE_DATA[brailleSection], len = items.length, item = items[brailleIdx];
+    const isNum = brailleSection === 'numbers';
+
+    document.getElementById('braille-label').textContent   = item.label;
+    document.getElementById('braille-counter').textContent = `${brailleIdx+1} / ${len}`;
+    document.getElementById('braille-prev').disabled       = brailleIdx === 0;
+    document.getElementById('braille-next').disabled       = brailleIdx === len-1;
+    document.getElementById('braille-cell-title').textContent = isNum ? 'Digit' : 'Letter';
+    syncJump('braille-jump', brailleIdx);
+
+    // Show number indicator cell only for numbers section
+    const numIndicatorEl = document.getElementById('braille-num-indicator');
+    numIndicatorEl.style.display = isNum ? 'flex' : 'none';
+    if (isNum) renderDots('braille-num-grid', NUM_INDICATOR);
+
+    renderDots('braille-grid', item.dots);
+}
+
+function renderDots(gridId, dots) {
+    const grid = document.getElementById(gridId);
+    const dotNumbers = [1, 4, 2, 5, 3, 6];
+    grid.classList.add('fading');
+    setTimeout(() => {
+        grid.innerHTML = '';
+        (dots || [0,0,0,0,0,0]).forEach((active, idx) => {
+            const dot = document.createElement('div');
+            dot.className = 'braille-dot' + (active ? ' active' : '');
+            const label = document.createElement('span');
+            label.className = 'dot-number';
+            label.textContent = String(dotNumbers[idx]);
+            dot.appendChild(label);
+            grid.appendChild(dot);
+        });
+        grid.classList.remove('fading');
+    }, 180);
+}
+
+function sampleBrailleOptions(answer) {
+    const siblings = BRAILLE_PRACTICE_POOL.filter(item => item.label !== answer.label);
+    const picked = [];
+    while (picked.length < 3 && siblings.length) {
+        const idx = Math.floor(Math.random() * siblings.length);
+        picked.push(siblings.splice(idx, 1)[0]);
+    }
+    return [answer, ...picked].sort(() => Math.random() - 0.5);
+}
+
+function renderBraillePracticeQuestion() {
+    const promptEl = document.getElementById('braille-practice-prompt');
+    const actionsEl = document.getElementById('braille-practice-actions');
+    const feedbackEl = document.getElementById('braille-practice-feedback');
+    const nextBtn = document.getElementById('braille-practice-next');
+    const scoreEl = document.getElementById('braille-practice-score');
+
+    scoreEl.textContent = `Score: ${braillePractice.correct} / ${braillePractice.total}`;
+    feedbackEl.textContent = '';
+    nextBtn.classList.remove('visible');
+    actionsEl.innerHTML = '';
+
+    const answer = BRAILLE_PRACTICE_POOL[Math.floor(Math.random() * BRAILLE_PRACTICE_POOL.length)];
+    braillePractice.current = answer;
+    braillePractice.options = sampleBrailleOptions(answer);
+    braillePractice.answered = false;
+
+    promptEl.textContent = answer.type === 'number'
+        ? 'Identify this Braille digit. The number sign is shown too.'
+        : 'Identify this Braille letter.';
+
+    document.getElementById('braille-label').textContent = 'Practice';
+    document.getElementById('braille-counter').textContent = `${braillePractice.total + 1} ?`;
+    document.getElementById('braille-prev').disabled = true;
+    document.getElementById('braille-next').disabled = true;
+    document.getElementById('braille-cell-title').textContent = answer.type === 'number' ? 'Digit' : 'Letter';
+
+    const numIndicatorEl = document.getElementById('braille-num-indicator');
+    numIndicatorEl.style.display = answer.type === 'number' ? 'flex' : 'none';
+    if (answer.type === 'number') renderDots('braille-num-grid', NUM_INDICATOR);
+    renderDots('braille-grid', answer.dots);
+
+    braillePractice.options.forEach(option => {
+        const btn = document.createElement('button');
+        btn.className = 'practice-btn';
+        btn.textContent = option.label;
+        btn.onclick = () => submitBrailleAnswer(option.label, btn);
+        actionsEl.appendChild(btn);
+    });
+}
+
+function submitBrailleAnswer(selectedLabel, buttonEl) {
+    if (braillePractice.answered || !braillePractice.current) return;
+    braillePractice.answered = true;
+    braillePractice.total += 1;
+
+    const isCorrect = selectedLabel === braillePractice.current.label;
+    const buttons = document.querySelectorAll('#braille-practice-actions .practice-btn');
+    buttons.forEach(btn => {
+        btn.disabled = true;
+        if (btn.textContent === braillePractice.current.label) btn.classList.add('correct');
+    });
+    if (!isCorrect && buttonEl) buttonEl.classList.add('wrong');
+    if (isCorrect) braillePractice.correct += 1;
+
+    document.getElementById('braille-practice-score').textContent = `Score: ${braillePractice.correct} / ${braillePractice.total}`;
+    document.getElementById('braille-practice-feedback').textContent = isCorrect
+        ? `Correct. That Braille symbol is ${braillePractice.current.label}.`
+        : `Not quite. The correct answer was ${braillePractice.current.label}.`;
+    document.getElementById('braille-practice-next').classList.add('visible');
+}
+
+function nextBrailleQuestion() {
+    renderBraillePracticeQuestion();
+}
+
+function startBraillePractice() {
+    document.querySelector('#braille-carousel .carousel-nav').style.display = 'flex';
+    document.getElementById('braille-jump').style.display = 'none';
+    document.getElementById('braille-practice-panel').classList.add('visible');
+    renderBraillePracticeQuestion();
+}
+
+document.addEventListener('keydown', e => {
+    if (document.getElementById('braille-carousel').style.display === 'none') return;
+    if (brailleSection === 'practice') return;
+    if (e.key === 'ArrowRight') brailleNav(1);
+    if (e.key === 'ArrowLeft')  brailleNav(-1);
+});
+
+</script>
 </body>
 </html>
