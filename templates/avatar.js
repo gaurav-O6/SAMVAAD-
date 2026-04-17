@@ -57,6 +57,19 @@ window.SAMVAADAvatar = (function () {
     const ROOT_MOTION_NAMES  = [
         "armature", "root", "hips", "pelvis", "mixamorighips", "bip001", "bip01"
     ];
+    const NUMBER_WORD_MAP = {
+        "zero": "0",
+        "one": "1",
+        "two": "2",
+        "three": "3",
+        "four": "4",
+        "five": "5",
+        "six": "6",
+        "seven": "7",
+        "eight": "8",
+        "nine": "9",
+        "ten": "10",
+    };
 
     // Drag state
     let _isDragging   = false;
@@ -373,6 +386,9 @@ window.SAMVAADAvatar = (function () {
         _tryLoad(base, (_obj, animations) => {
             const clip = _pickBestClip(animations);
             _clipCache[base] = clip || null;
+            if (!clip) {
+                console.warn(`Avatar: no usable animation clip found for "${base}"`);
+            }
             onClip(clip);
         });
     }
@@ -462,8 +478,34 @@ window.SAMVAADAvatar = (function () {
         if (!key) return null;
 
         const lower = key.toLowerCase();
+        if (lower in NUMBER_WORD_MAP) return NUMBER_WORD_MAP[lower];
         if (/^[a-z]$/.test(lower)) return lower.toUpperCase();
         return lower;
+    }
+
+    function _normalizeWordToken(word) {
+        const lower = String(word || "").trim().toLowerCase();
+        if (!lower) return "";
+        return NUMBER_WORD_MAP[lower] || lower;
+    }
+
+    function _tokenizeInput(text) {
+        const rawTokens = String(text || "").trim().split(/\s+/).filter(Boolean);
+        const expanded = [];
+
+        for (const rawToken of rawTokens) {
+            const token = _normalizeWordToken(rawToken);
+            if (!token) continue;
+
+            if (/^\d+$/.test(token) && token !== "10" && token.length > 1) {
+                for (const digit of token) expanded.push(digit);
+                continue;
+            }
+
+            expanded.push(token);
+        }
+
+        return expanded;
     }
 
     // ── Play idle loop ────────────────────────────────────────────────────────
@@ -530,7 +572,7 @@ window.SAMVAADAvatar = (function () {
 
         for (let wi = 0; wi < words.length; wi++) {
             const word  = words[wi];
-            const lower = word.toLowerCase();
+            const lower = _normalizeWordToken(word);
             const exists = await _fileExists(lower);
 
             if (exists) {
@@ -603,6 +645,7 @@ window.SAMVAADAvatar = (function () {
         if (activeHand === "right") queue.push(T.LOWER_RIGHT);
         if (activeHand === "left")  queue.push(T.LOWER_LEFT);
 
+        console.log("Avatar queue:", queue);
         return queue;
     }
 
@@ -620,9 +663,13 @@ window.SAMVAADAvatar = (function () {
         _isPlaying    = true;
         const signKey = _queue.shift();
         const isTransition = TRANSITION_KEYS.has(signKey);
+        console.log(`Avatar: next clip "${signKey}"${isTransition ? " (transition)" : ""}`);
 
         _fetchClip(signKey, clip => {
             if (token !== _playbackToken) return;
+            if (!clip) {
+                console.warn(`Avatar: skipping "${signKey}" because no clip was loaded`);
+            }
             _crossfadeToClip(clip, isTransition ? null : signKey, () => _playNext(token));
         });
     }
@@ -781,7 +828,7 @@ window.SAMVAADAvatar = (function () {
         _isPlaying = false;
         const token = _playbackToken;
 
-        const words = text.trim().toLowerCase().split(/\s+/).filter(Boolean);
+        const words = _tokenizeInput(text);
         const queue = await _buildQueue(words);
 
         if (token !== _playbackToken || queue.length === 0) return;
