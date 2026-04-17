@@ -1,54 +1,45 @@
-"""
+r"""
 ================================================================
-  SAMVAAD — Flask Backend  (app.py)
-  Place this file in:  D:\SAMVAAD\templates\
+  SAMVAAD - Flask Backend
 
   HOW TO RUN:
-      cd D:\SAMVAAD\templates
+      cd D:\\SAMVAAD
       python app.py
 
-  Then open:  http://localhost:5000
-
-  FIXES in this version:
-    1. `if data is None` instead of `if not data` — empty list [] is
-       a valid payload (no hands detected) and must NOT return 400.
-    2. lm_array() in sign_recog.py now accepts numpy arrays directly,
-       so classify_right/left_hand work correctly when called from Flask.
-    3. Both fetch paths in sign.html now throw on non-ok HTTP status,
-       so _requestInFlight is always cleared even on server errors.
+  Then open: http://localhost:5000
 ================================================================
 """
 
 import json
+import os
 import re
+import sys
 import threading
+
 import numpy as np
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
-import sys, os
 
-# ── sign_recog.py is one level up (D:\SAMVAAD\sign_recog.py) ─────────────────
-_parent = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-sys.path.insert(0, _parent)
+TEMPLATES_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(TEMPLATES_DIR)
+ANIMATIONS_DIR = os.path.join(TEMPLATES_DIR, "animations")
+LIBS_DIR = os.path.join(TEMPLATES_DIR, "libs")
+DATASET_DIR = os.path.join(ROOT_DIR, "dataset")
 
-from sign_recog import (
-    classify_right_hand,
-    classify_left_hand,
-    StableGesture,
-)
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
 
-# Tuned for ~30fps landmark input — fast server-side debounce
+from sign_recog import StableGesture, classify_left_hand, classify_right_hand
+
 CONFIRM_FRAMES = 3
 RELEASE_FRAMES = 3
 
-# ── App ───────────────────────────────────────────────────────────────────────
-app = Flask(__name__, static_folder=".")
+app = Flask(__name__, static_folder=TEMPLATES_DIR, template_folder=TEMPLATES_DIR)
 CORS(app)
 
-# Per-client StableGesture state
 _stable_states = {}
-_states_lock   = threading.Lock()
-_samples_dir   = os.path.join(_parent, "dataset", "gesture_samples")
+_states_lock = threading.Lock()
+_samples_dir = os.path.join(DATASET_DIR, "gesture_samples")
 _sample_matcher = None
 RIGHT_HAND_GESTURES = {
     "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
@@ -71,7 +62,7 @@ def _get_stable(client_id):
         if client_id not in _stable_states:
             _stable_states[client_id] = {
                 "right": StableGesture(confirm=CONFIRM_FRAMES, release=RELEASE_FRAMES),
-                "left":  StableGesture(confirm=CONFIRM_FRAMES, release=RELEASE_FRAMES),
+                "left": StableGesture(confirm=CONFIRM_FRAMES, release=RELEASE_FRAMES),
             }
         return _stable_states[client_id]
 
@@ -84,15 +75,8 @@ def _sanitize_label(value):
 def _prepare_landmarks(raw_lms):
     return np.array(
         [[1.0 - lm["x"], lm["y"], lm["z"]] for lm in raw_lms],
-        dtype=np.float32
+        dtype=np.float32,
     )
-
-
-def _infer_user_side(label, lms):
-    mirrored_label_side = {"left": "right", "right": "left"}.get(label, "")
-    wrist_x = float(lms[0, 0])
-    position_side = "right" if wrist_x >= 0.5 else "left"
-    return mirrored_label_side, position_side
 
 
 def _summarize_sample_files():
@@ -120,13 +104,12 @@ def _format_gesture_label(key):
 
 
 def _discover_common_gesture_animations():
-    animations_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "animations")
     discovered = {}
 
-    if not os.path.isdir(animations_dir):
+    if not os.path.isdir(ANIMATIONS_DIR):
         return []
 
-    for name in os.listdir(animations_dir):
+    for name in os.listdir(ANIMATIONS_DIR):
         base, ext = os.path.splitext(name)
         if ext.lower() not in {".fbx", ".glb"}:
             continue
@@ -249,92 +232,62 @@ def _match_recorded_gesture(lms, allowed_labels):
     return label
 
 
-# ── Static serving ────────────────────────────────────────────────────────────
-
 @app.route("/")
 def home():
-    return send_from_directory(".", "index.html")
+    return send_from_directory(TEMPLATES_DIR, "index.html")
+
 
 @app.route("/animations/<path:filename>")
 def serve_animations(filename):
-    return send_from_directory(
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "animations"), filename)
+    return send_from_directory(ANIMATIONS_DIR, filename)
+
 
 @app.route("/libs/<path:filename>")
 def serve_libs(filename):
-    return send_from_directory(
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "libs"), filename)
+    return send_from_directory(LIBS_DIR, filename)
+
 
 @app.route("/<path:filename>")
 def static_files(filename):
-    return send_from_directory(".", filename)
+    return send_from_directory(TEMPLATES_DIR, filename)
 
-
-# ── PRIMARY: Landmark-based classification (maximum accuracy) ─────────────────
 
 @app.route("/process_landmarks", methods=["POST"])
 def process_landmarks():
     """
-    Receives landmark coordinates directly from the browser's MediaPipe instance.
-
-    FIX: `data is None` instead of `not data`.
-    An empty list [] means "no hands detected" — it is a valid payload.
-    The old `if not data` treated [] as falsy and returned 400, which
-    caused _requestInFlight to get stuck True in the browser, freezing
-    the camera feed permanently after the first no-hand frame.
-
-    Expected JSON body:
-    [
-        {
-            "label": "Right",
-            "landmarks": [
-                {"x": 0.52, "y": 0.73, "z": -0.04},  // landmark 0 (WRIST)
-                ...                                     // landmarks 1-20
-            ]
-        },
-        ...  // second hand if present
-    ]
-
-    Returns: { "text": "A" }
+    Receives browser-side MediaPipe landmark coordinates directly.
+    An empty list [] means "no hands detected" and is a valid payload.
     """
     data = request.get_json(silent=True)
-
-    # ── FIX 1: Only reject truly missing/malformed JSON, not empty list ───
     if data is None:
         return jsonify({"text": ""}), 400
 
     right_raw = None
-    left_raw  = None
+    left_raw = None
 
     for hand in data:
         try:
-            label   = str(hand.get("label", "")).strip().lower()
             raw_lms = hand.get("landmarks", [])
-
             if len(raw_lms) != 21:
-                continue  # MediaPipe always gives 21 landmarks; skip malformed
+                continue
 
-            # ── FIX 2: Build numpy array directly ────────────────────────
-            # sign_recog.py's classify_*_hand() functions expect shape (21,3).
-            # lm_array() was designed for MediaPipe landmark objects; we bypass
-            # it here and construct the array ourselves from the JSON payload.
             lms = _prepare_landmarks(raw_lms)
-
-            # Browser handedness can be flipped on selfie cameras, so use the
-            # reported label as a hint, then fall back to the opposite model.
-            mirrored_label_side, position_side = _infer_user_side(label, lms)
             right_guess = classify_right_hand(lms)
-            left_guess  = classify_left_hand(lms)
+            left_guess = classify_left_hand(lms)
 
+            position_side = "right" if float(lms[0, 0]) >= 0.5 else "left"
             if position_side == "right":
                 recorded_right_guess = _match_recorded_gesture(lms, RIGHT_HAND_GESTURES)
-                right_raw = recorded_right_guess or (right_guess if right_guess in RIGHT_HAND_GESTURES else None)
-            elif position_side == "left":
+                right_raw = recorded_right_guess or (
+                    right_guess if right_guess in RIGHT_HAND_GESTURES else None
+                )
+            else:
                 recorded_left_guess = _match_recorded_gesture(lms, LEFT_HAND_GESTURES)
-                left_raw = recorded_left_guess or (left_guess if left_guess in LEFT_HAND_GESTURES else None)
-
+                left_raw = recorded_left_guess or (
+                    left_guess if left_guess in LEFT_HAND_GESTURES else None
+                )
         except (KeyError, TypeError, ValueError):
-            continue  # skip malformed hand data, don't crash
+            continue
 
     stable = _get_stable(request.remote_addr)
     stable["right"].update(right_raw)
@@ -406,26 +359,30 @@ def record_gesture_sample():
     })
 
 
-# ── Braille endpoint ──────────────────────────────────────────────────────────
-
 @app.route("/api/recognize-braille", methods=["POST"])
 def recognize_braille():
     import cv2
+
     if "image" not in request.files:
         return jsonify({"error": "No image uploaded"}), 400
+
     file = request.files["image"]
     if file.filename == "":
         return jsonify({"error": "Empty filename"}), 400
+
     try:
         from samvaad_braille import BrailleRecognizer
+
         file_bytes = file.read()
-        np_arr     = np.frombuffer(file_bytes, np.uint8)
-        img        = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+        np_arr = np.frombuffer(file_bytes, np.uint8)
+        img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
         if img is None:
             return jsonify({"error": "Could not decode image"}), 400
+
         result = BrailleRecognizer().analyze(img)
         if not result.text.strip():
             return jsonify({"error": "No Braille detected in image"}), 200
+
         return jsonify({
             "text": result.text,
             "raw_text": result.raw_text,
@@ -439,14 +396,5 @@ def recognize_braille():
         })
     except ImportError:
         return jsonify({"error": "samvaad_braille.py not found"}), 500
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-if __name__ == "__main__":
-    print("\n" + "=" * 55)
-    print("  SAMVAAD Backend is running!")
-    print("  Open your browser at:  http://localhost:5000")
-    print("  Mode: Landmark-based (maximum accuracy)")
-    print("=" * 55 + "\n")
-    app.run(host="0.0.0.0", port=5000, debug=False, threaded=True)
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500

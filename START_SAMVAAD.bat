@@ -2,7 +2,6 @@
 title SAMVAAD Launcher
 color 0A
 set "ROOT_DIR=%~dp0"
-set "TEMPLATES_DIR=%ROOT_DIR%templates"
 set "VENV_ACTIVATE=%ROOT_DIR%venv\Scripts\activate.bat"
 set "SAMVAAD_URL=http://localhost:5000"
 
@@ -13,8 +12,8 @@ echo    Starting backend and opening browser...
 echo  =====================================================
 echo.
 
-if not exist "%TEMPLATES_DIR%\app.py" (
-    echo  ERROR: Could not find "%TEMPLATES_DIR%\app.py"
+if not exist "%ROOT_DIR%app.py" (
+    echo  ERROR: Could not find "%ROOT_DIR%app.py"
     echo  Make sure this launcher stays inside the SAMVAAD project folder.
     echo.
     pause
@@ -31,7 +30,7 @@ if not exist "%VENV_ACTIVATE%" (
 )
 
 :: Start backend in a separate window so this launcher can continue
-start "SAMVAAD Server" cmd /k "cd /d ""%TEMPLATES_DIR%"" && call ""%VENV_ACTIVATE%"" && python app.py"
+start "SAMVAAD Server" cmd /k "cd /d ""%ROOT_DIR%"" && call ""%VENV_ACTIVATE%"" && python app.py"
 
 :: Give Flask a moment to come up, then open the browser
 timeout /t 3 /nobreak >nul

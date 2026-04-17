@@ -40,7 +40,8 @@ window.SAMVAADAvatar = (function () {
     let _model        = null;
     let _modelReady   = false;
     let _modelLoading = false;
-
+    let _baseAssetManager = null;
+    let _assetsReady  = false;
     // Clip cache: base name → AnimationClip | null (null = file confirmed missing)
     const _clipCache   = {};
     // File-exists cache: full path → true | false
@@ -81,6 +82,12 @@ window.SAMVAADAvatar = (function () {
     const CROSSFADE_DURATION = 0.15;  // seconds
     const MIN_SIGN_MS        = 600;   // minimum ms any sign is shown
     const IDLE_INTRO_MS      = 2000;  // how long idle plays before the intro sequence
+    const CLIP_SETTLE_MS     = 360;   // let end-pose breathe before the next clip
+    const SIGN_BLEND_CLEANUP_MS = Math.round(CROSSFADE_DURATION * 1000) + 20;
+    const IDLE_SPEED         = 1.0;   // idle stays natural regardless of selected sign speed
+    const ROOT_MOTION_NAMES  = [
+        "armature", "root", "hips", "pelvis", "mixamorighips", "bip001", "bip01"
+    ];
 
     // Drag state
     let _isDragging   = false;
@@ -129,6 +136,41 @@ window.SAMVAADAvatar = (function () {
         );
     }
 
+    function _setAvatarVisible(visible) {
+        if (_renderer?.domElement) {
+            _renderer.domElement.style.visibility = visible ? "visible" : "hidden";
+        }
+    }
+
+    function _revealAvatarIfReady() {
+        if (!_modelReady || !_assetsReady) return;
+        _setAvatarVisible(true);
+        if (_loadingEl) _loadingEl.style.display = "none";
+        if (_container) {
+            _container.querySelectorAll(
+                "#avatar-fallback, #sign-avatar-fallback, #avatar"
+            ).forEach(el => { el.style.display = "none"; });
+        }
+    }
+
+    function _createBaseAssetManager() {
+        if (typeof THREE?.LoadingManager === "undefined") return;
+        _assetsReady = false;
+        _baseAssetManager = new THREE.LoadingManager();
+        _baseAssetManager.onStart = () => {
+            _assetsReady = false;
+            if (_loadingEl) _loadingEl.style.display = "flex";
+            _setAvatarVisible(false);
+        };
+        _baseAssetManager.onLoad = () => {
+            _assetsReady = true;
+            _revealAvatarIfReady();
+        };
+        _baseAssetManager.onError = (url) => {
+            console.warn("Avatar: asset failed while loading:", url);
+        };
+    }
+
     // ── Scene setup ───────────────────────────────────────────────────────────
     function _initScene(container) {
         _container = container;
@@ -141,6 +183,7 @@ window.SAMVAADAvatar = (function () {
         _renderer.outputEncoding          = THREE.sRGBEncoding;
         _renderer.physicallyCorrectLights = true;
         _renderer.setClearColor(0x000000, 0);
+        _renderer.domElement.style.visibility = "hidden";
         container.appendChild(_renderer.domElement);
 
         _scene  = new THREE.Scene();
@@ -171,7 +214,7 @@ window.SAMVAADAvatar = (function () {
     function _renderLoop() {
         requestAnimationFrame(_renderLoop);
         const delta = _clock.getDelta();
-        if (_mixer) _mixer.update(delta * _speed);
+        if (_mixer) _mixer.update(delta);
         if (_renderer && _scene && _camera) _renderer.render(_scene, _camera);
     }
 
@@ -243,14 +286,43 @@ window.SAMVAADAvatar = (function () {
                 }
             }
         });
-        return animations.reduce((best, clip) =>
+        const bestClip = animations.reduce((best, clip) =>
             clip.duration > best.duration ? clip : best, animations[0]);
+        return _stabilizeClip(bestClip);
+    }
+
+    function _isRootMotionTrack(trackName) {
+        if (!trackName) return false;
+        const parts = String(trackName).split(".");
+        if (parts.length < 2) return false;
+
+        const nodeName = parts[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+        const propName = parts[parts.length - 1].toLowerCase();
+        if (propName !== "position") return false;
+
+        return ROOT_MOTION_NAMES.some(name => nodeName === name || nodeName.includes(name));
+    }
+
+    function _stabilizeClip(clip) {
+        if (!clip?.tracks?.length || typeof THREE?.AnimationClip === "undefined") {
+            return clip;
+        }
+
+        const filteredTracks = clip.tracks.filter(track => !_isRootMotionTrack(track.name));
+        if (filteredTracks.length === clip.tracks.length) {
+            return clip;
+        }
+
+        console.log(
+            `Avatar: stabilized clip "${clip.name}" by removing ${clip.tracks.length - filteredTracks.length} root-motion track(s)`
+        );
+        return new THREE.AnimationClip(clip.name, clip.duration, filteredTracks);
     }
 
     // ── Raw loaders ───────────────────────────────────────────────────────────
-    function _loadFBX(path, onLoaded) {
+    function _loadFBX(path, onLoaded, manager = null) {
         if (typeof THREE?.FBXLoader === "undefined") { onLoaded(null, []); return; }
-        const loader = new THREE.FBXLoader();
+        const loader = new THREE.FBXLoader(manager || undefined);
         loader.setResourcePath(window.location.origin + "/" + _animFolder);
         loader.load(path,
             obj  => onLoaded(obj, obj.animations || []),
@@ -259,9 +331,9 @@ window.SAMVAADAvatar = (function () {
         );
     }
 
-    function _loadGLB(path, onLoaded) {
+    function _loadGLB(path, onLoaded, manager = null) {
         if (typeof THREE?.GLTFLoader === "undefined") { onLoaded(null, []); return; }
-        const loader = new THREE.GLTFLoader();
+        const loader = new THREE.GLTFLoader(manager || undefined);
         loader.load(path,
             gltf => onLoaded(gltf.scene, gltf.animations || []),
             null,
@@ -270,12 +342,12 @@ window.SAMVAADAvatar = (function () {
     }
 
     // ── Try FBX first, fall back to GLB ──────────────────────────────────────
-    function _tryLoad(base, onLoaded) {
+    function _tryLoad(base, onLoaded, manager = null) {
         const fbxPath = _animFolder + base + ".fbx";
         const glbPath = _animFolder + base + ".glb";
         fetch(fbxPath, { method: "HEAD" })
-            .then(r => r.ok ? _loadFBX(fbxPath, onLoaded) : _loadGLB(glbPath, onLoaded))
-            .catch(()  => _loadGLB(glbPath, onLoaded));
+            .then(r => r.ok ? _loadFBX(fbxPath, onLoaded, manager) : _loadGLB(glbPath, onLoaded, manager))
+            .catch(()  => _loadGLB(glbPath, onLoaded, manager));
     }
 
     // ── Check if animation file exists (cached) ───────────────────────────────
@@ -320,16 +392,10 @@ window.SAMVAADAvatar = (function () {
             const clip = _pickBestClip(animations);
             if (clip) _clipCache[base] = clip;
 
-            if (_loadingEl) _loadingEl.style.display = "none";
-            if (_container) {
-                _container.querySelectorAll(
-                    "#avatar-fallback, #sign-avatar-fallback, #avatar"
-                ).forEach(el => { el.style.display = "none"; });
-            }
-
             console.log(`Avatar: model ready (source: "${base}") ✓`);
+            _revealAvatarIfReady();
             onReady();
-        });
+        }, _baseAssetManager);
     }
 
     // ── Fetch clip for a key, using cache ─────────────────────────────────────
@@ -342,16 +408,29 @@ window.SAMVAADAvatar = (function () {
         });
     }
 
+    function _getClipDurationMs(base, fallbackMs = 3000) {
+        return new Promise(resolve => {
+            _fetchClip(base, clip => {
+                const seconds = clip?.duration || 0;
+                if (seconds > 0.01) {
+                    resolve(Math.round((seconds * 1000) / Math.max(_speed, 0.1)));
+                    return;
+                }
+                resolve(fallbackMs);
+            });
+        });
+    }
+
     // ── Crossfade to a clip ───────────────────────────────────────────────────
     // Handles three cases cleanly:
     //   idle  → sign : stop idle after crossfade so LoopRepeat can't reassert
     //   sign  → sign : crossFadeFrom previous (clamped at last frame, safe)
     //   sign  → idle : handled in _playIdle
     function _crossfadeToClip(clip, label, onDone) {
-        if (label !== null && _onSignChange) _onSignChange(label || "");
+        if (_onSignChange) _onSignChange(label || "");
 
         if (!clip || !_mixer || !_model) {
-            setTimeout(onDone, 80);
+            setTimeout(onDone, 16);
             return;
         }
 
@@ -370,17 +449,24 @@ window.SAMVAADAvatar = (function () {
                 // Idle is LoopRepeat — we must crossFadeTo (not From) so we
                 // control the direction, then hard-stop idle after the blend
                 // window so it cannot keep influencing the mixer.
-                prev.crossFadeTo(incoming, CROSSFADE_DURATION, true);
+                prev.crossFadeTo(incoming, CROSSFADE_DURATION, false);
                 setTimeout(() => {
                     if (_idleAction) {
                         _idleAction.stop();
                         _idleAction.enabled = false;
                         _idleAction = null;
                     }
-                }, Math.round(CROSSFADE_DURATION * 1000) + 20);
+                }, SIGN_BLEND_CLEANUP_MS);
             } else {
-                // Previous was a sign (LoopOnce, clamped) — safe smooth blend
-                incoming.crossFadeFrom(prev, CROSSFADE_DURATION, true);
+                // Previous was a sign (LoopOnce, clamped). Blend at fixed speed
+                // so time-warping does not make the gesture feel cut or frozen.
+                incoming.crossFadeFrom(prev, CROSSFADE_DURATION, false);
+                setTimeout(() => {
+                    if (prev !== incoming) {
+                        prev.stop();
+                        prev.enabled = false;
+                    }
+                }, SIGN_BLEND_CLEANUP_MS);
             }
         }
 
@@ -394,13 +480,15 @@ window.SAMVAADAvatar = (function () {
             done = true;
             _mixer.removeEventListener("finished", onFinished);
             if (_model) _model.rotation.y = _rotationY;
-            setTimeout(onDone, 80);
+            setTimeout(() => {
+                requestAnimationFrame(() => onDone());
+            }, CLIP_SETTLE_MS);
         }
         function onFinished(e) { if (e.action === incoming) finish(); }
         _mixer.addEventListener("finished", onFinished);
 
         const durMs = (clip.duration * 1000) / Math.max(_speed, 0.1);
-        setTimeout(finish, Math.max(durMs, MIN_SIGN_MS) + 400);
+        setTimeout(finish, Math.max(durMs, MIN_SIGN_MS));
     }
 
     function _resolveSingleSignKey(rawKey) {
@@ -421,6 +509,8 @@ window.SAMVAADAvatar = (function () {
                 return;
             }
 
+            if (_onSignChange) _onSignChange("");
+
             const action = _mixer.clipAction(clip);
             // Full reset so idle always starts from frame 0 cleanly,
             // especially important after being stopped by _crossfadeToClip.
@@ -429,7 +519,7 @@ window.SAMVAADAvatar = (function () {
             action.enabled           = true;
             action.setLoop(THREE.LoopRepeat, Infinity);
             action.clampWhenFinished = false;
-            action.timeScale         = _speed;
+            action.timeScale         = IDLE_SPEED;
 
             // Smooth crossfade from the last sign back into idle.
             // The previous sign is clamped at its last frame, so blending
@@ -633,6 +723,7 @@ window.SAMVAADAvatar = (function () {
             try {
                 if (_loadingEl) _loadingEl.style.display = "flex";
                 await _loadDeps();
+                _createBaseAssetManager();
                 _initScene(container);
                 _renderLoop();
 
@@ -667,27 +758,12 @@ window.SAMVAADAvatar = (function () {
     api.playIntro = function (sequence) {
         if (!sequence || sequence.length === 0) return;
 
-        // Play keys one at a time from a copy of the array.
-        // Calls onAllDone() when the array is exhausted.
         function runKeys(keys, onAllDone) {
             if (keys.length === 0) { onAllDone(); return; }
-            const key     = keys.shift();
+            const key = keys.shift();
             const isTrans = TRANSITION_KEYS.has(key);
-            console.log("Avatar intro: →", key);
             _fetchClip(key, clip => {
-                _crossfadeToClip(clip, isTrans ? null : key, () => {
-                    runKeys(keys, onAllDone);
-                });
-            });
-        }
-
-        // One full cycle: play sequence then idle for idleMs, then repeat.
-        function cycle(builtQueue, idleMs) {
-            console.log("Avatar intro: cycle start, keys:", builtQueue.length);
-            runKeys([...builtQueue], () => {
-                console.log("Avatar intro: sequence done, idling", idleMs, "ms");
-                _playIdle();
-                setTimeout(() => cycle(builtQueue, idleMs), idleMs);
+                _crossfadeToClip(clip, isTrans ? null : key, () => runKeys(keys, onAllDone));
             });
         }
 
@@ -702,9 +778,21 @@ window.SAMVAADAvatar = (function () {
                 return;
             }
 
-            // Idle is already playing from init(). Wait 2 s then begin.
-            console.log("Avatar intro: waiting", IDLE_INTRO_MS, "ms before first sequence");
-            setTimeout(() => cycle(builtQueue, 3000), IDLE_INTRO_MS);
+            const fullIdleMs = await _getClipDurationMs(T.IDLE, 3000);
+
+            function cycle() {
+                console.log("Avatar intro: short idle", IDLE_INTRO_MS, "ms");
+                _playIdle();
+                setTimeout(() => {
+                    runKeys([...builtQueue], () => {
+                        console.log("Avatar intro: full idle", fullIdleMs, "ms");
+                        _playIdle();
+                        setTimeout(cycle, fullIdleMs);
+                    });
+                }, IDLE_INTRO_MS);
+            }
+
+            cycle();
         }
 
         _whenReady(start);
@@ -772,8 +860,12 @@ window.SAMVAADAvatar = (function () {
      */
     api.setSpeed = function (speed) {
         _speed = speed;
-        if (_currentAction) _currentAction.timeScale = speed;
-        if (_idleAction)    _idleAction.timeScale    = speed;
+        if (_currentAction && _currentAction !== _idleAction) {
+            _currentAction.timeScale = speed;
+        }
+        if (_idleAction) {
+            _idleAction.timeScale = IDLE_SPEED;
+        }
     };
 
     /**

@@ -1,0 +1,2 @@
+"""SAMVAAD web app package."""
+

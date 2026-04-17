@@ -382,9 +382,9 @@ footer strong { color:#00ffcc; }
     <div style="font-size:11px;color:rgba(0,255,204,0.5);letter-spacing:0.5px;">⟵ drag to rotate ⟶</div>
     <div style="display:flex;gap:10px;align-items:center;">
         <span style="font-size:12px;color:rgba(255,255,255,0.5);letter-spacing:0.5px;margin-right:4px;">SPEED</span>
-        <button class="speed-btn" id="sp-slow"   onclick="setSpeed(0.5)">0.5×</button>
-        <button class="speed-btn active" id="sp-normal" onclick="setSpeed(1.0)">1.0×</button>
-        <button class="speed-btn" id="sp-fast"   onclick="setSpeed(2.0)">2.0×</button>
+        <button class="speed-btn" id="sp-slow"   onclick="setSpeed(1.0)">0.5×</button>
+        <button class="speed-btn active" id="sp-normal" onclick="setSpeed(2.0)">1.0×</button>
+        <button class="speed-btn" id="sp-fast"   onclick="setSpeed(3.0)">2.0×</button>
     </div>
 </div>
 
@@ -894,6 +894,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             baseAnimation:    'A',
             onSignChange:     updateSignLabel,
         });
+        setSpeed(2.0);
         if (!SAMVAADAvatar.isReady()) {
             document.getElementById('sign-avatar-fallback').style.display = 'flex';
         }
@@ -923,9 +924,9 @@ function speak(text) {
 }
 function setSpeed(val) {
     SAMVAADAvatar.setSpeed(val);
-    document.getElementById('sp-slow').classList.toggle('active',   val === 0.5);
-    document.getElementById('sp-normal').classList.toggle('active', val === 1.0);
-    document.getElementById('sp-fast').classList.toggle('active',   val === 2.0);
+    document.getElementById('sp-slow').classList.toggle('active',   val === 1.0);
+    document.getElementById('sp-normal').classList.toggle('active', val === 2.0);
+    document.getElementById('sp-fast').classList.toggle('active',   val === 3.0);
 }
 
 // ── Voice input ───────────────────────────────────────────────────────

@@ -1,96 +1,99 @@
-SAMVAAD – Multimodal Communication System
+# SAMVAAD
 
-SAMVAAD is an AI-powered assistive communication platform designed to bridge communication gaps for individuals with hearing, speech, and visual impairments. The system integrates multiple technologies to enable seamless interaction through speech, sign language, and braille recognition.
+SAMVAAD is a multimodal assistive communication system that brings together sign language, text, speech, and Braille workflows in one project. It is built as an accessibility-focused final year project for bridging communication gaps across hearing, speech, and visual impairments.
 
-The goal of SAMVAAD is to create a unified interface where different forms of human communication can be translated and understood across modalities.
+## What It Does
 
-Features
-Speech to Text
+- Real-time sign recognition from browser-captured hand landmarks
+- Text-to-sign playback using a 3D avatar and sign animation library
+- Voice input and text-to-speech in the web interface
+- Braille image recognition with confidence scoring and debug overlays
+- Gesture sample recording for extending or calibrating recognition
 
-Converts spoken language into readable text in real time.
+## Project Structure
 
-Text to Speech
+```text
+SAMVAAD/
++-- app.py                  # Root Flask entry point
++-- requirements.txt
++-- sign_recog.py           # Landmark-based sign classifier
++-- samvaad_braille.py      # Braille recognition engine + CLI
++-- dataset/                # Braille samples and gesture samples
++-- templates/
+�   +-- app.py              # Flask app module
+�   +-- avatar.js           # 3D avatar controller
+�   +-- index.html          # Landing page
+�   +-- sign.html           # Sign recognition mode
+�   +-- braille.html        # Braille mode
+�   +-- learn.html          # Learn/common gestures mode
+�   +-- animations/         # FBX avatar + sign animations
+�   +-- libs/               # Three.js / loader dependencies
++-- tests/                  # Lightweight regression tests
+```
 
-Allows written text to be converted into spoken output.
+## Tech Stack
 
-Sign Language Recognition
+- Python
+- Flask
+- Flask-CORS
+- MediaPipe
+- OpenCV
+- NumPy
+- Browser Web Speech APIs
+- Three.js
 
-Uses computer vision to recognize hand gestures and translate them into text.
+## Quick Start
 
-Braille Recognition
+1. Clone the repository and enter the project folder.
+2. Create and activate a virtual environment.
+3. Install dependencies:
 
-Detects braille patterns from images and converts them into readable characters.
-
-Gesture and Motion Capture
-
-Motion capture data is used to improve gesture analysis and dataset generation.
-
-Motion Capture Integration
-
-Gesture datasets used in this project were generated and analyzed using Marionette Studio, a motion capture software that records and tracks human movement.
-
-Using Marionette mocap allowed us to:
-
-Capture realistic human gesture movements
-
-Improve training data for sign language recognition
-
-Analyze motion patterns more accurately
-
-Simulate gesture sequences for testing
-
-This significantly improves gesture detection reliability compared to static image datasets.
-
-Technologies Used
-
-Python
-
-Computer Vision
-
-Machine Learning
-
-Flask Web Framework
-
-OpenCV
-
-Speech Recognition Libraries
-
-Motion Capture Data Processing
-
-Project Structure
-SAMVAAD
-│
-├── dataset
-├── templates
-├── static
-├── app.py
-├── mediapipe_test.py
-├── requirements.txt
-└── README.md
-How to Run the Project
-1 Clone the repository
-git clone https://github.com/gaurav-O6/SAMVAAD-
-2 Navigate to the project
-cd SAMVAAD
-3 Install dependencies
+```bash
 pip install -r requirements.txt
-4 Run the application
+```
+
+4. Start the backend from the project root:
+
+```bash
 python app.py
-Future Improvements
+```
 
-Real-time sign language sentence translation
+5. Open [http://localhost:5000](http://localhost:5000).
 
-Integration with mobile platforms
+On Windows, you can also use [START_SAMVAAD.bat](</D:/SAMVAAD/START_SAMVAAD.bat>) after creating the virtual environment.
 
-Expanded braille dataset
+## Testing
 
-Enhanced motion capture datasets for gesture learning
+Run the regression tests from the project root:
 
-Author
+```bash
+python -m unittest discover -s tests
+```
 
-Gaurav
-Final Year Project – SAMVAAD
+You can also run the Braille recognizer directly:
 
-License
+```bash
+python samvaad_braille.py --test dataset
+```
 
-This project is developed for academic and research purposes.
+## Notes
+
+- The 3D avatar currently uses FBX assets from [templates/animations](</D:/SAMVAAD/templates/animations>).
+- Sign recognition uses browser-side MediaPipe landmarks and server-side gesture stabilization.
+- Gesture sample files are stored under `dataset/gesture_samples`.
+
+## Roadmap Ideas
+
+- Sentence-level sign translation
+- Better evaluation metrics for gesture accuracy
+- More curated Braille benchmark images
+- Easier packaging for demos and classroom setup
+
+## Author
+
+Gaurav  
+Final Year Project - SAMVAAD
+
+## License
+
+This project is intended for academic and research use.
