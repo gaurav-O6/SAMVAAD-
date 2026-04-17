@@ -1,16 +1,9 @@
-# SAMVAAD - Real-Time ASL Recognition System
-# Rule-based, normalized, stable gesture recognition
-# Right Hand: A-Z, HELLO, STOP, SPACE
-# Left Hand:  0-10, YES, NO
-
 import time
 import cv2
 import mediapipe as mp
 import numpy as np
 from collections import deque
 
-# ─────────────────────────────────────────────
-# CONFIGURATION
 # ─────────────────────────────────────────────
 CONFIRM_FRAMES     = 6   # frames to hold before locking (higher = stabler)
 RELEASE_FRAMES     = 5   # frames of absence before clearing
@@ -21,8 +14,6 @@ AMBIGUITY_MARGIN   = 0.04
 HISTORY_SIZE       = 8
 MAJORITY_RATIO     = 0.75
 
-# ─────────────────────────────────────────────
-# MEDIAPIPE
 # ─────────────────────────────────────────────
 mp_hands          = mp.solutions.hands
 mp_drawing        = mp.solutions.drawing_utils
@@ -36,8 +27,6 @@ hands_detector = mp_hands.Hands(
 )
 
 # ─────────────────────────────────────────────
-# LANDMARK INDICES
-# ─────────────────────────────────────────────
 WRIST=0; THUMB_CMC=1; THUMB_MCP=2; THUMB_IP=3; THUMB_TIP=4
 INDEX_MCP=5;  INDEX_PIP=6;  INDEX_DIP=7;  INDEX_TIP=8
 MIDDLE_MCP=9; MIDDLE_PIP=10; MIDDLE_DIP=11; MIDDLE_TIP=12
@@ -45,26 +34,10 @@ RING_MCP=13;  RING_PIP=14;  RING_DIP=15;  RING_TIP=16
 PINKY_MCP=17; PINKY_PIP=18; PINKY_DIP=19; PINKY_TIP=20
 
 # ═════════════════════════════════════════════
-# GEOMETRY
-# ═════════════════════════════════════════════
-
 def lm_array(landmarks):
-    """
-    FIX: Accept both MediaPipe landmark objects AND pre-built numpy arrays.
-
-    When called from main() (standalone webcam mode):
-        landmarks = a MediaPipe NormalizedLandmarkList object
-        → extract .x .y .z from each landmark
-
-    When called from app.py (Flask/landmark mode):
-        landmarks is already a numpy array of shape (21, 3)
-        → return it directly, no conversion needed
-
-    Without this check, Flask would crash because numpy arrays don't
-    have a .landmark attribute.
-    """
+    """Return landmarks as a numpy array."""
     if isinstance(landmarks, np.ndarray):
-        return landmarks  # already the right format
+        return landmarks
     return np.array([[lm.x, lm.y, lm.z] for lm in landmarks.landmark])
 
 def hand_scale(lms):
@@ -90,9 +63,6 @@ def hand_is_large_enough(lms):
     return hand_scale(lms) > 0.12
 
 # ═════════════════════════════════════════════
-# FINGER STATES
-# ═════════════════════════════════════════════
-
 def finger_states(lms):
     th = lms[THUMB_TIP, 0] < lms[THUMB_CMC, 0]   # right hand CMC-based
     ix = tip_above_pip(lms, INDEX_TIP,  INDEX_PIP)
@@ -110,10 +80,6 @@ def finger_states_left(lms):
     return th, ix, mx, rx, px
 
 # ═════════════════════════════════════════════
-# RIGHT HAND CLASSIFIER
-# Every threshold derived from user's captured gesture data.
-# ═════════════════════════════════════════════
-
 def classify_right_hand(lms):
     if not hand_is_large_enough(lms):
         return None
@@ -497,3 +463,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -1,35 +1,4 @@
-/**
- * SAMVAAD Avatar Player  —  avatar.js
- * =====================================
- * Architecture: load model ONCE, swap animation clips in-place.
- *
- * Sign flow (smart — raise/lower only around fingerspelled runs):
- *
- *   • Words with their own FBX file (e.g. hello.fbx):
- *       played directly — NO raise/lower hand before/after them.
- *
- *   • Words without FBX (fingerspelled letter by letter):
- *       raise_right (or raise_left) → letters → lower_right (or lower_left)
- *       raise/lower inserted only at the START and END of each
- *       contiguous fingerspelled run, not around every word.
- *
- *   • A "space" animation (space.fbx / space.glb) is inserted between
- *       every word. If the file doesn't exist yet it is silently skipped.
- *
- * Intro loop (index.html):
- *   2 s of idle → sequence → full idle → sequence → …
- *
- * Transition files (all optional — skipped gracefully if not in folder):
- *   idle.fbx            default standing pose, loops
- *   right_hand_raise.fbx  raise right hand before fingerspelled right-hand run
- *   lower_right.fbx     lower right hand after fingerspelled right-hand run
- *   raise_left.fbx      raise left hand before fingerspelled left-hand run
- *   lower_left.fbx      lower left hand after fingerspelled left-hand run
- *   space.fbx           "space / gap" gesture played between words
- *
- * Left-hand signs: numbers 1–10, YES, NO
- * Right-hand signs: all letters A–Z and all other words
- */
+// Shared avatar player for the landing page and sign mode.
 
 window.SAMVAADAvatar = (function () {
 
@@ -84,7 +53,7 @@ window.SAMVAADAvatar = (function () {
     const IDLE_INTRO_MS      = 2000;  // how long idle plays before the intro sequence
     const CLIP_SETTLE_MS     = 360;   // let end-pose breathe before the next clip
     const SIGN_BLEND_CLEANUP_MS = Math.round(CROSSFADE_DURATION * 1000) + 20;
-    const IDLE_SPEED         = 1.0;   // idle stays natural regardless of selected sign speed
+    const IDLE_SPEED         = 1.0;
     const ROOT_MOTION_NAMES  = [
         "armature", "root", "hips", "pelvis", "mixamorighips", "bip001", "bip01"
     ];
@@ -422,10 +391,6 @@ window.SAMVAADAvatar = (function () {
     }
 
     // ── Crossfade to a clip ───────────────────────────────────────────────────
-    // Handles three cases cleanly:
-    //   idle  → sign : stop idle after crossfade so LoopRepeat can't reassert
-    //   sign  → sign : crossFadeFrom previous (clamped at last frame, safe)
-    //   sign  → idle : handled in _playIdle
     function _crossfadeToClip(clip, label, onDone) {
         if (_onSignChange) _onSignChange(label || "");
 
@@ -879,3 +844,4 @@ window.SAMVAADAvatar = (function () {
     return api;
 
 })();
+

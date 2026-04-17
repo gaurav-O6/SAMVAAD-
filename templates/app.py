@@ -1,14 +1,4 @@
-r"""
-================================================================
-  SAMVAAD - Flask Backend
-
-  HOW TO RUN:
-      cd D:\\SAMVAAD
-      python app.py
-
-  Then open: http://localhost:5000
-================================================================
-"""
+"""SAMVAAD Flask backend."""
 
 import json
 import os
@@ -398,3 +388,4 @@ def recognize_braille():
         return jsonify({"error": "samvaad_braille.py not found"}), 500
     except Exception as exc:
         return jsonify({"error": str(exc)}), 500
+

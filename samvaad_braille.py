@@ -1,26 +1,4 @@
-"""
-================================================================================
-  Project SAMVAAD – Braille Recognition
-  samvaad_braille.py  (ONE FILE – engine + runner combined)
-
-  HOW TO RUN  (from D:\\SAMVAAD in VS Code terminal):
-  ──────────────────────────────────────────────────
-  Interactive (type paths one by one):
-      python samvaad_braille.py
-
-  Single image:
-      python samvaad_braille.py D:\\SAMVAAD\\dataset\\G.png
-
-  Test entire dataset folder (A-Z, 0-9, test images):
-      python samvaad_braille.py --test D:\\SAMVAAD\\dataset
-
-  With debug overlays saved next to each image:
-      python samvaad_braille.py --test D:\\SAMVAAD\\dataset --debug
-
-  DEPENDENCIES:
-      pip install opencv-python numpy
-================================================================================
-"""
+"""Braille recognition utilities and CLI for SAMVAAD."""
 
 from __future__ import annotations
 
@@ -40,9 +18,6 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  WORD SPLITTER (for Braille images without spaces between words)
-# ══════════════════════════════════════════════════════════════════════════════
-
 _COMMON_WORDS = {
     'a', 'about', 'all', 'also', 'and', 'as', 'at', 'be', 'because', 'but', 'by',
     'can', 'come', 'could', 'day', 'do', 'even', 'find', 'first', 'for', 'from',
@@ -60,22 +35,18 @@ _COMMON_WORDS = {
 }
 
 def _split_concatenated_words(text: str) -> str:
-    """
-    Split text without spaces into words using dynamic programming.
-    Example: 'hellothisis' -> 'hello this is'
-    """
+    """Split text without spaces into words."""
     if not text or len(text) < 3:
         return text
     
     text_lower = text.lower()
     n = len(text_lower)
     
-    # dp[i] = (cost, prev_position)
     dp = [(float('inf'), -1)] * (n + 1)
     dp[0] = (0, -1)
     
     for i in range(1, n + 1):
-        for j in range(max(0, i - 15), i):  # Max word length 15
+        for j in range(max(0, i - 15), i):
             word = text_lower[j:i]
             if word in _COMMON_WORDS:
                 cost = dp[j][0]
@@ -85,47 +56,23 @@ def _split_concatenated_words(text: str) -> str:
             if cost < dp[i][0]:
                 dp[i] = (cost, j)
     
-    # Backtrack
     words = []
     pos = n
     while pos > 0:
         prev = dp[pos][1]
         if prev == -1:
             break
-        words.append(text[prev:pos])  # Preserve original case
+        words.append(text[prev:pos])
         pos = prev
     
     words.reverse()
     return ' '.join(words) if words else text
 
 def auto_space_text(raw_text: str, remove_newlines: bool = True) -> str:
-    """
-    Post-process Braille decoder output to add spaces and clean formatting.
-    
-    Parameters
-    ----------
-    raw_text : str
-        Raw output from BrailleRecognizer.recognize()
-    remove_newlines : bool
-        If True, converts multi-line Braille into single line (default: True)
-        
-    Returns
-    -------
-    str
-        Clean text with proper word spacing
-        
-    Examples
-    --------
-    >>> auto_space_text('hellothisis\ntestforbraille')
-    'hello this is test for braille'
-    
-    >>> auto_space_text('hello world')  # already has spaces
-    'hello world'
-    """
+    """Post-process Braille output to add spacing and clean line breaks."""
     if not raw_text:
         return ""
     
-    # Process each line separately FIRST (before joining)
     lines = raw_text.split('\n')
     processed_lines = []
     
@@ -134,14 +81,11 @@ def auto_space_text(raw_text: str, remove_newlines: bool = True) -> str:
         if not line:
             continue
         
-        # Only split if genuinely long concatenated text (>12 chars).
-        # Short words and names like 'gaurav' (6 chars) are left as-is.
         if ' ' not in line and len(line) > 12:
             line = _split_concatenated_words(line)
         
         processed_lines.append(line)
     
-    # Then join lines based on remove_newlines flag
     if remove_newlines:
         return ' '.join(processed_lines)
     else:
@@ -857,3 +801,4 @@ Examples:
         _run_single(args.image, args.debug)
     else:
         _run_interactive(args.debug)
+
