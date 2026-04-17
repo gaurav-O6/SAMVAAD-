@@ -593,6 +593,7 @@ class BrailleRecognizer:
         cells = segment_cells(dots)
         raw_text = decode_cells(cells)
         text = auto_space_text(raw_text, remove_newlines=True) if auto_space else raw_text
+        text = text.upper()
         unknown_cells = sum(1 for c in cells if any(c.pattern) and BRAILLE_MAP.get(c.pattern) is None)
         confidence = _estimate_confidence(dots, cells, raw_text, text, auto_space)
         return RecognitionResult(
