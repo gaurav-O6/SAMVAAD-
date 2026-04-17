@@ -20,14 +20,14 @@ SAMVAAD/
 +-- samvaad_braille.py      # Braille recognition engine + CLI
 +-- dataset/                # Braille samples and gesture samples
 +-- templates/
-¦   +-- app.py              # Flask app module
-¦   +-- avatar.js           # 3D avatar controller
-¦   +-- index.html          # Landing page
-¦   +-- sign.html           # Sign recognition mode
-¦   +-- braille.html        # Braille mode
-¦   +-- learn.html          # Learn/common gestures mode
-¦   +-- animations/         # FBX avatar + sign animations
-¦   +-- libs/               # Three.js / loader dependencies
+|   +-- app.py              # Flask app module
+|   +-- avatar.js           # 3D avatar controller
+|   +-- index.html          # Landing page
+|   +-- sign.html           # Sign recognition mode
+|   +-- braille.html        # Braille mode
+|   +-- learn.html          # Learn/common gestures mode
+|   +-- animations/         # FBX avatar + sign animations
+|   +-- libs/               # Three.js / loader dependencies
 +-- tests/                  # Lightweight regression tests
 ```
 
@@ -62,6 +62,15 @@ python app.py
 
 On Windows, you can also use [START_SAMVAAD.bat](</D:/SAMVAAD/START_SAMVAAD.bat>) after creating the virtual environment.
 
+Recommended Windows flow:
+
+```powershell
+python -m venv venv
+.\venv\Scripts\activate
+pip install -r requirements.txt
+python app.py
+```
+
 ## Testing
 
 Run the regression tests from the project root:
@@ -69,6 +78,8 @@ Run the regression tests from the project root:
 ```bash
 python -m unittest discover -s tests
 ```
+
+If you use a virtual environment, run the tests from that same environment so Flask, Werkzeug, MediaPipe, and OpenCV are available.
 
 You can also run the Braille recognizer directly:
 

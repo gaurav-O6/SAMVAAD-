@@ -6,6 +6,7 @@ import argparse
 import logging
 import math
 import os
+import re
 import sys
 import time
 from dataclasses import dataclass, field
@@ -32,6 +33,11 @@ _COMMON_WORDS = {
     'hello', 'world', 'test', 'braille', 'detection', 'system', 'image', 'text',
     'is', 'are', 'was', 'were', 'been', 'being', 'am', 'has', 'had', 'does', 'did',
     'message', 'welcome', 'thanks', 'please', 'help', 'yes', 'no',
+    'lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur', 'adipiscing',
+    'elit', 'sed', 'eiusmod', 'tempor', 'incididunt', 'labore', 'dolore',
+    'magna', 'aliqua', 'enim', 'minim', 'veniam', 'quis', 'nostrud',
+    'exercitation', 'ullamco', 'laboris', 'nisi', 'aliquip', 'commodo',
+    'consequat', 'conseq', 'ea', 'ex',
 }
 
 def _split_concatenated_words(text: str) -> str:
@@ -87,9 +93,43 @@ def auto_space_text(raw_text: str, remove_newlines: bool = True) -> str:
         processed_lines.append(line)
     
     if remove_newlines:
-        return ' '.join(processed_lines)
+        if not processed_lines:
+            return ""
+
+        merged_lines = [processed_lines[0]]
+        for next_line in processed_lines[1:]:
+            prev_line = merged_lines[-1]
+            merged = _merge_broken_line_boundary(prev_line, next_line)
+            if merged is not None:
+                merged_lines[-1] = merged
+            else:
+                merged_lines.append(next_line)
+        return ' '.join(merged_lines)
     else:
         return '\n'.join(processed_lines)
+
+def _merge_broken_line_boundary(prev_line: str, next_line: str) -> Optional[str]:
+    """Merge line breaks when a word is clearly split across two lines."""
+    prev_match = re.search(r'([A-Za-z]+)$', prev_line)
+    next_match = re.match(r'([A-Za-z]+)', next_line)
+    if not prev_match or not next_match:
+        return None
+
+    prev_word = prev_match.group(1)
+    next_word = next_match.group(1)
+    combined = (prev_word + next_word).lower()
+    prev_known = prev_word.lower() in _COMMON_WORDS
+    next_known = next_word.lower() in _COMMON_WORDS
+    combined_known = combined in _COMMON_WORDS
+
+    if not combined_known:
+        return None
+    if prev_known and next_known:
+        return None
+
+    merged_prev = prev_line[:-len(prev_word)] + prev_word + next_word
+    merged_next = next_line[len(next_word):].lstrip()
+    return f"{merged_prev} {merged_next}".strip() if merged_next else merged_prev
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  BRAILLE LOOKUP TABLE  (Grade-1 English)
@@ -505,48 +545,79 @@ def decode_cells(cells: List[BrailleCell]) -> str:
     if not cells:
         return ""
 
-    cells_sorted = sorted(cells, key=lambda c: (c.row, c.col))
-    lines: Dict[int, str] = {}
-    line_buf: List[str] = []
-    prev_row = cells_sorted[0].row
-    num_mode = cap_next = False
+    def estimate_word_gap_threshold(row_cells: List[BrailleCell]) -> Optional[float]:
+        if len(row_cells) < 3:
+            return None
 
-    for cell in cells_sorted:
-        if cell.row != prev_row:
-            lines[prev_row] = "".join(line_buf)
-            line_buf = []; num_mode = cap_next = False
-            prev_row = cell.row
+        gaps = []
+        for left, right in zip(row_cells, row_cells[1:]):
+            lx, ly, lw, lh = left.bbox
+            rx, ry, rw, rh = right.bbox
+            gap = float(rx - (lx + lw))
+            if gap > 0:
+                gaps.append(gap)
 
-        pat = cell.pattern
+        if len(gaps) < 2:
+            return None
 
-        if pat == NUMBER_INDICATOR:
-            num_mode = True; continue
-        if pat == CAPITAL_INDICATOR:
-            cap_next = True; continue
+        baseline = float(np.percentile(gaps, 30))
+        return baseline * 2.0
 
-        # Only output a space for a genuinely blank cell (all dots absent).
-        # Skip it if the last character added was already a space
-        # to avoid double-spacing from artifact empty cells.
-        if pat == (0,0,0,0,0,0):
-            if line_buf and line_buf[-1] != ' ':
-                line_buf.append(' ')
-            num_mode = False
-            continue
+    def decode_row(row_cells: List[BrailleCell]) -> str:
+        row_cells = sorted(row_cells, key=lambda c: c.bbox[0])
+        word_gap_threshold = estimate_word_gap_threshold(row_cells)
+        line_buf: List[str] = []
+        num_mode = False
+        cap_next = False
 
-        if num_mode:
-            ch = DIGIT_MAP.get(pat)
-            if ch:
-                line_buf.append(ch); continue
-            else:
+        for idx, cell in enumerate(row_cells):
+            if idx > 0 and word_gap_threshold is not None:
+                prev = row_cells[idx - 1]
+                px, py, pw, ph = prev.bbox
+                cx, cy, cw, ch = cell.bbox
+                gap = float(cx - (px + pw))
+                if gap >= word_gap_threshold and line_buf and line_buf[-1] != ' ':
+                    line_buf.append(' ')
+                    num_mode = False
+
+            pat = cell.pattern
+
+            if pat == NUMBER_INDICATOR:
+                num_mode = True
+                continue
+            if pat == CAPITAL_INDICATOR:
+                cap_next = True
+                continue
+
+            # Only output a space for a genuinely blank cell (all dots absent).
+            # Skip it if the last character added was already a space
+            # to avoid double-spacing from artifact empty cells.
+            if pat == (0,0,0,0,0,0):
+                if line_buf and line_buf[-1] != ' ':
+                    line_buf.append(' ')
+                num_mode = False
+                continue
+
+            if num_mode:
+                ch = DIGIT_MAP.get(pat)
+                if ch:
+                    line_buf.append(ch)
+                    continue
                 num_mode = False
 
-        ch = BRAILLE_MAP.get(pat, '?')
-        if cap_next and ch.isalpha():
-            ch = ch.upper(); cap_next = False
-        line_buf.append(ch)
+            ch = BRAILLE_MAP.get(pat, '?')
+            if cap_next and ch.isalpha():
+                ch = ch.upper()
+                cap_next = False
+            line_buf.append(ch)
 
-    lines[prev_row] = "".join(line_buf)
-    return "\n".join(lines[k].strip() for k in sorted(lines))
+        return "".join(line_buf).strip()
+
+    rows: Dict[int, List[BrailleCell]] = {}
+    for cell in cells:
+        rows.setdefault(cell.row, []).append(cell)
+
+    return "\n".join(decode_row(rows[row]) for row in sorted(rows))
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  PUBLIC API  (for SAMVAAD integration)

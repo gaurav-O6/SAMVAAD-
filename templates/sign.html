@@ -199,6 +199,38 @@ header span { color:#00ffcc; }
 }
 #output-bar { display:flex; align-items:center; width:100%; gap:12px; }
 
+#speaker-language-menu {
+    position:fixed;
+    min-width:150px;
+    background:rgba(4,16,12,0.96);
+    border:1.5px solid rgba(0,255,204,0.28);
+    border-radius:16px;
+    box-shadow:0 14px 28px rgba(0,0,0,0.35);
+    padding:8px;
+    display:none;
+    flex-direction:column;
+    gap:6px;
+    z-index:200;
+}
+#speaker-language-menu.open { display:flex; }
+.language-option {
+    padding:10px 12px;
+    border:none;
+    border-radius:12px;
+    background:transparent;
+    color:#dffef7;
+    text-align:left;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    transition:all 0.2s ease;
+}
+.language-option:hover,
+.language-option.active {
+    background:rgba(0,255,204,0.14);
+    color:#00ffcc;
+}
+
 #recognized-text {
     flex:1; padding:12px 16px; border-radius:25px; border:none;
     background:rgba(255,255,255,0.1); color:#fff; font-size:16px;
@@ -355,7 +387,7 @@ footer strong { color:#00ffcc; }
 
     <input type="text" id="text-input" placeholder="Type text here...">
 
-    <button class="icon-btn" onclick="speak(textInput.value)" title="Speak text">
+    <button class="icon-btn speak-btn" id="input-speaker-btn" data-speak-source="input" title="Speak text (hold to change language)">
         <svg viewBox="0 0 24 24">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
@@ -390,7 +422,7 @@ footer strong { color:#00ffcc; }
 
 <div id="output-section">
     <div id="output-bar">
-        <button class="icon-btn" id="speaker-btn" title="Speak recognized text">
+        <button class="icon-btn speak-btn" id="speaker-btn" data-speak-source="recognized" title="Speak recognized text (hold to change language)">
             <svg viewBox="0 0 24 24">
                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
                 <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
@@ -402,7 +434,8 @@ footer strong { color:#00ffcc; }
 
         <button class="icon-btn" id="back-camera-btn" onclick="toggleCamera()" title="Stop camera">
             <svg viewBox="0 0 24 24">
-                <polyline points="15 18 9 12 15 6"/>
+                <path d="M23 7l-7 5 7 5V7z"/>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
             </svg>
         </button>
     </div>
@@ -429,6 +462,11 @@ footer strong { color:#00ffcc; }
     </div>
 </div>
 
+<div id="speaker-language-menu" aria-hidden="true">
+    <button class="language-option active" type="button" data-lang="hi-IN">Hindi</button>
+    <button class="language-option" type="button" data-lang="en-US">English</button>
+</div>
+
 <footer>
     <strong>SAMVAAD</strong> — Sign and Multimodal Voice Assistive Access &amp; Dialogue<br>
     © 2026 Final Year Engineering Project
@@ -453,6 +491,10 @@ const holdBarWrap    = document.getElementById('hold-bar-wrap');
 const holdBar        = document.getElementById('hold-bar');
 const mainDisplay    = document.getElementById('main-display');
 const ghostBtn       = document.getElementById('ghost-btn');
+const backBtn        = document.getElementById('back-btn');
+const speakerLanguageMenu = document.getElementById('speaker-language-menu');
+const languageOptionButtons = Array.from(document.querySelectorAll('.language-option'));
+const speakerButtons = Array.from(document.querySelectorAll('.speak-btn'));
 
 // ── State ─────────────────────────────────────────────────────────────
 let cameraActive  = false;
@@ -475,6 +517,144 @@ let _holdTimer      = null;
 let _holdProgress   = null;
 let _holdClearTimer = null;
 let _savedCaretOffset = 0;
+let _availableVoices = [];
+let _selectedSpeechLang = 'hi-IN';
+let _speechMenuAnchor = null;
+let _speakerHoldTimer = null;
+let _speakerHoldTriggered = false;
+let _activeRecognition = null;
+const SPEAKER_HOLD_MS = 450;
+
+function refreshVoices() {
+    _availableVoices = speechSynthesis.getVoices();
+}
+
+function pickPreferredVoice(lang) {
+    const voices = _availableVoices.length ? _availableVoices : speechSynthesis.getVoices();
+    if (!voices.length) return null;
+
+    const normalizedLang = String(lang || '').toLowerCase();
+    const sameLang = voices.filter(v => (v.lang || '').toLowerCase() === normalizedLang);
+    const sameLocale = sameLang.length ? sameLang : voices.filter(v => (v.lang || '').toLowerCase().startsWith(normalizedLang.split('-')[0]));
+    const pool = sameLocale.length ? sameLocale : voices;
+
+    if (normalizedLang === 'en-us' || normalizedLang === 'en-in') {
+        const femaleEnglish = pool.find(v => /female|woman|zira|hazel|susan|aria|samantha|karen|heera|priya|veena/i.test(v.name));
+        if (femaleEnglish) return femaleEnglish;
+    }
+
+    return pool[0] || null;
+}
+
+function getLanguageLabel(lang) {
+    return lang === 'en-US' ? 'English' : 'Hindi';
+}
+
+function syncLanguageMenu() {
+    languageOptionButtons.forEach(button => {
+        button.classList.toggle('active', button.dataset.lang === _selectedSpeechLang);
+    });
+}
+
+function setSpeechLanguage(lang) {
+    _selectedSpeechLang = lang === 'en-US' ? 'en-US' : 'hi-IN';
+    syncLanguageMenu();
+    if (_activeRecognition) _activeRecognition.lang = _selectedSpeechLang;
+    showStatus(`${getLanguageLabel(_selectedSpeechLang)} mode selected`, 'success');
+}
+
+function hideSpeechLanguageMenu() {
+    speakerLanguageMenu.classList.remove('open');
+    speakerLanguageMenu.setAttribute('aria-hidden', 'true');
+    _speechMenuAnchor = null;
+}
+
+function showSpeechLanguageMenu(anchor) {
+    _speechMenuAnchor = anchor;
+    const rect = anchor.getBoundingClientRect();
+    speakerLanguageMenu.style.left = `${Math.max(12, rect.left)}px`;
+    speakerLanguageMenu.style.top = `${Math.max(12, rect.top - 112)}px`;
+    speakerLanguageMenu.classList.add('open');
+    speakerLanguageMenu.setAttribute('aria-hidden', 'false');
+    syncLanguageMenu();
+}
+
+function getSpeechText(source) {
+    return source === 'input' ? textInput.value.trim() : _confirmedStr.trim();
+}
+
+function speakFromSource(source) {
+    speak(getSpeechText(source));
+}
+
+function clearSpeakerHold() {
+    clearTimeout(_speakerHoldTimer);
+    _speakerHoldTimer = null;
+}
+
+function stopSpeech() {
+    if (typeof speechSynthesis !== 'undefined') {
+        speechSynthesis.cancel();
+    }
+}
+
+backBtn.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    stopSpeech();
+    window.location.href = 'options.html';
+}, true);
+
+function bindSpeakerButton(button) {
+    const source = button.dataset.speakSource;
+
+    button.addEventListener('pointerdown', event => {
+        if (event.button !== undefined && event.button !== 0) return;
+        _speakerHoldTriggered = false;
+        clearSpeakerHold();
+        _speakerHoldTimer = setTimeout(() => {
+            _speakerHoldTriggered = true;
+            showSpeechLanguageMenu(button);
+        }, SPEAKER_HOLD_MS);
+    });
+
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(name => {
+        button.addEventListener(name, () => clearSpeakerHold());
+    });
+
+    button.addEventListener('click', event => {
+        if (_speakerHoldTriggered) {
+            event.preventDefault();
+            _speakerHoldTriggered = false;
+            return;
+        }
+        hideSpeechLanguageMenu();
+        speakFromSource(source);
+    });
+
+    button.addEventListener('contextmenu', event => event.preventDefault());
+}
+
+languageOptionButtons.forEach(button => {
+    button.addEventListener('click', event => {
+        event.stopPropagation();
+        setSpeechLanguage(button.dataset.lang);
+        hideSpeechLanguageMenu();
+    });
+});
+
+speakerButtons.forEach(bindSpeakerButton);
+
+document.addEventListener('click', event => {
+    if (!speakerLanguageMenu.classList.contains('open')) return;
+    if (speakerLanguageMenu.contains(event.target)) return;
+    if (_speechMenuAnchor && _speechMenuAnchor.contains(event.target)) return;
+    hideSpeechLanguageMenu();
+});
+
+window.addEventListener('resize', hideSpeechLanguageMenu);
+window.addEventListener('scroll', hideSpeechLanguageMenu, true);
+syncLanguageMenu();
 
 // ── Ghost mode toggle ─────────────────────────────────────────────────
 function toggleGhost() {
@@ -768,7 +948,6 @@ function _resetHold() {
 }
 
 // ── Output controls ───────────────────────────────────────────────────
-document.getElementById('speaker-btn').onclick    = () => speak(_confirmedStr);
 document.getElementById('btn-clear-last').onclick = () => {
     if (!_confirmedStr.length) return;
     const caret = document.activeElement === recognizedText ? getCaretOffset(recognizedText) : _savedCaretOffset;
@@ -779,6 +958,7 @@ document.getElementById('btn-clear-last').onclick = () => {
     setCaretOffset(recognizedText, _savedCaretOffset);
 };
 document.getElementById('btn-clear-all').onclick  = () => {
+    stopSpeech();
     _confirmedStr = ''; _savedCaretOffset = 0; updateDisplay(); liveGesture.textContent = ''; _resetHold();
 };
 recognizedText.addEventListener('input', syncConfirmedTextFromEditor);
@@ -913,12 +1093,16 @@ function convertToSign() {
 function clearText() {
     textInput.value = '';
     statusMsg.textContent = '';
+    stopSpeech();
     SAMVAADAvatar.stop();
 }
 function speak(text) {
     if (!text) return;
-    speechSynthesis.cancel();
+    stopSpeech();
     const u = new SpeechSynthesisUtterance(text);
+    u.lang = _selectedSpeechLang;
+    const preferredVoice = pickPreferredVoice(u.lang);
+    if (preferredVoice) u.voice = preferredVoice;
     u.rate = 0.9;
     speechSynthesis.speak(u);
 }
@@ -933,7 +1117,8 @@ function setSpeed(val) {
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 if (SR) {
     const rec = new SR();
-    rec.lang = 'en-US'; rec.continuous = false;
+    rec.lang = _selectedSpeechLang; rec.continuous = false;
+    _activeRecognition = rec;
     rec.onstart  = () => { micBtn.classList.add('mic-active'); showStatus('Listening...', 'info'); };
     rec.onend    = () => micBtn.classList.remove('mic-active');
     rec.onresult = e => {
@@ -944,6 +1129,11 @@ if (SR) {
     micBtn.onclick = () => { try { rec.start(); } catch(e) { showStatus('Mic already active', 'error'); } };
 } else {
     micBtn.style.display = 'none';
+}
+
+refreshVoices();
+if (typeof speechSynthesis !== 'undefined') {
+    speechSynthesis.onvoiceschanged = refreshVoices;
 }
 </script>
 </body>

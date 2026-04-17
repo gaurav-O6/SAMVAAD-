@@ -202,6 +202,38 @@ header span { color:#00ffcc; }
     font-size:16px;
 }
 
+#speaker-language-menu {
+    position:fixed;
+    min-width:150px;
+    background:rgba(4,16,12,0.96);
+    border:1.5px solid rgba(0,255,204,0.28);
+    border-radius:16px;
+    box-shadow:0 14px 28px rgba(0,0,0,0.35);
+    padding:8px;
+    display:none;
+    flex-direction:column;
+    gap:6px;
+    z-index:200;
+}
+#speaker-language-menu.open { display:flex; }
+.language-option {
+    padding:10px 12px;
+    border:none;
+    border-radius:12px;
+    background:transparent;
+    color:#dffef7;
+    text-align:left;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    transition:all 0.2s ease;
+}
+.language-option:hover,
+.language-option.active {
+    background:rgba(0,255,204,0.14);
+    color:#00ffcc;
+}
+
 /* ── Professional SVG icon buttons ── */
 .icon-btn {
     background: rgba(0,255,204,0.07);
@@ -352,7 +384,7 @@ footer strong { color: #00ffcc; }
     <input id="text-input" type="text" placeholder="Type or speak text...">
 
     <!-- Speaker -->
-    <button class="icon-btn" onclick="speak(textInput.value)" title="Speak text">
+    <button class="icon-btn speak-btn" id="speaker-btn" title="Speak text (hold to change language)">
         <svg viewBox="0 0 24 24">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
@@ -372,6 +404,11 @@ footer strong { color: #00ffcc; }
     <input type="file" id="image-input" accept="image/*" hidden>
 </div>
 
+<div id="speaker-language-menu" aria-hidden="true">
+    <button class="language-option active" type="button" data-lang="hi-IN">Hindi</button>
+    <button class="language-option" type="button" data-lang="en-US">English</button>
+</div>
+
 <div class="controls">
     <button class="action" onclick="convertText()">Convert</button>
     <button class="action" id="analyze-btn" onclick="analyzeImage()" disabled>Analyze Image</button>
@@ -389,6 +426,8 @@ const brailleDisplay = document.getElementById("braille-display");
 const imageInput     = document.getElementById("image-input");
 const imagePreview   = document.getElementById("image-preview");
 const micBtn         = document.getElementById("mic-btn");
+const speakerBtn     = document.getElementById("speaker-btn");
+const backBtn        = document.getElementById("back-btn");
 const analyzeBtn     = document.getElementById("analyze-btn");
 const loadingSpinner = document.getElementById("loading-spinner");
 const statusMsg      = document.getElementById("status-msg");
@@ -397,6 +436,132 @@ const metaConfidence = document.getElementById("meta-confidence");
 const metaDots = document.getElementById("meta-dots");
 const metaCells = document.getElementById("meta-cells");
 const metaUnknown = document.getElementById("meta-unknown");
+const speakerLanguageMenu = document.getElementById("speaker-language-menu");
+const languageOptionButtons = Array.from(document.querySelectorAll(".language-option"));
+let availableVoices = [];
+let selectedSpeechLang = "hi-IN";
+let speakerHoldTimer = null;
+let speakerHoldTriggered = false;
+let speechMenuAnchor = null;
+let activeRecognition = null;
+const SPEAKER_HOLD_MS = 450;
+
+function refreshVoices() {
+    availableVoices = speechSynthesis.getVoices();
+}
+
+function pickPreferredVoice(lang) {
+    const voices = availableVoices.length ? availableVoices : speechSynthesis.getVoices();
+    if (!voices.length) return null;
+
+    const normalizedLang = String(lang || '').toLowerCase();
+    const sameLang = voices.filter(v => (v.lang || '').toLowerCase() === normalizedLang);
+    const sameLocale = sameLang.length ? sameLang : voices.filter(v => (v.lang || '').toLowerCase().startsWith(normalizedLang.split('-')[0]));
+    const pool = sameLocale.length ? sameLocale : voices;
+
+    if (normalizedLang === 'en-us' || normalizedLang === 'en-in') {
+        const femaleEnglish = pool.find(v => /female|woman|zira|hazel|susan|aria|samantha|karen|heera|priya|veena/i.test(v.name));
+        if (femaleEnglish) return femaleEnglish;
+    }
+
+    return pool[0] || null;
+}
+
+function getLanguageLabel(lang) {
+    return lang === "en-US" ? "English" : "Hindi";
+}
+
+function syncLanguageMenu() {
+    languageOptionButtons.forEach(button => {
+        button.classList.toggle("active", button.dataset.lang === selectedSpeechLang);
+    });
+}
+
+function setSpeechLanguage(lang) {
+    selectedSpeechLang = lang === "en-US" ? "en-US" : "hi-IN";
+    syncLanguageMenu();
+    if (activeRecognition) activeRecognition.lang = selectedSpeechLang;
+    showStatus(`${getLanguageLabel(selectedSpeechLang)} mode selected`, "success");
+}
+
+function hideSpeechLanguageMenu() {
+    speakerLanguageMenu.classList.remove("open");
+    speakerLanguageMenu.setAttribute("aria-hidden", "true");
+    speechMenuAnchor = null;
+}
+
+function showSpeechLanguageMenu(anchor) {
+    speechMenuAnchor = anchor;
+    const rect = anchor.getBoundingClientRect();
+    speakerLanguageMenu.style.left = `${Math.max(12, rect.left)}px`;
+    speakerLanguageMenu.style.top = `${Math.max(12, rect.top - 112)}px`;
+    speakerLanguageMenu.classList.add("open");
+    speakerLanguageMenu.setAttribute("aria-hidden", "false");
+    syncLanguageMenu();
+}
+
+function clearSpeakerHold() {
+    clearTimeout(speakerHoldTimer);
+    speakerHoldTimer = null;
+}
+
+function stopSpeech() {
+    if (typeof speechSynthesis !== "undefined") {
+        speechSynthesis.cancel();
+    }
+}
+
+backBtn.addEventListener("click", event => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    stopSpeech();
+    location.href = "options.html";
+}, true);
+
+speakerBtn.addEventListener("pointerdown", event => {
+    if (event.button !== undefined && event.button !== 0) return;
+    speakerHoldTriggered = false;
+    clearSpeakerHold();
+    speakerHoldTimer = setTimeout(() => {
+        speakerHoldTriggered = true;
+        showSpeechLanguageMenu(speakerBtn);
+    }, SPEAKER_HOLD_MS);
+});
+
+["pointerup", "pointerleave", "pointercancel"].forEach(name => {
+    speakerBtn.addEventListener(name, clearSpeakerHold);
+});
+
+speakerBtn.addEventListener("click", event => {
+    if (speakerHoldTriggered) {
+        event.preventDefault();
+        speakerHoldTriggered = false;
+        return;
+    }
+    hideSpeechLanguageMenu();
+    speak(brailleDisplay.textContent.trim() || textInput.value.trim());
+});
+
+speakerBtn.addEventListener("contextmenu", event => event.preventDefault());
+
+languageOptionButtons.forEach(button => {
+    button.addEventListener("click", event => {
+        event.stopPropagation();
+        setSpeechLanguage(button.dataset.lang);
+        hideSpeechLanguageMenu();
+    });
+});
+
+document.addEventListener("click", event => {
+    if (!speakerLanguageMenu.classList.contains("open")) return;
+    if (speakerLanguageMenu.contains(event.target)) return;
+    if (speechMenuAnchor && speechMenuAnchor.contains(event.target)) return;
+    hideSpeechLanguageMenu();
+});
+
+window.addEventListener("resize", hideSpeechLanguageMenu);
+window.addEventListener("scroll", hideSpeechLanguageMenu, true);
+syncLanguageMenu();
 
 /* BRAILLE MAP */
 const map = {
@@ -444,11 +609,19 @@ function updateRecognitionMeta(data) {
 
 function speak(text) {
     if (!text) return;
-    speechSynthesis.cancel();
+    stopSpeech();
     const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = selectedSpeechLang;
+    const preferredVoice = pickPreferredVoice(utterance.lang);
+    if (preferredVoice) utterance.voice = preferredVoice;
     utterance.rate = 0.9;
     utterance.pitch = 1.0;
     speechSynthesis.speak(utterance);
+}
+
+refreshVoices();
+if (typeof speechSynthesis !== 'undefined') {
+    speechSynthesis.onvoiceschanged = refreshVoices;
 }
 
 function convertText() {
@@ -482,6 +655,7 @@ function convertText() {
 }
 
 function clearText() {
+    stopSpeech();
     textInput.value = "";
     brailleDisplay.textContent = "";
     imagePreview.style.display = "none";
@@ -553,8 +727,9 @@ async function analyzeImage() {
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 if (SR) {
     const rec = new SR();
-    rec.lang = "en-US";
+    rec.lang = selectedSpeechLang;
     rec.continuous = false;
+    activeRecognition = rec;
     rec.onstart  = () => { micBtn.classList.add("mic-active"); showStatus("Listening...", "info"); };
     rec.onend    = () => micBtn.classList.remove("mic-active");
     rec.onresult = e => {

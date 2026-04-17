@@ -186,6 +186,8 @@ def classify_right_hand(lms):
                 return "C"
             if index_pinky > 0.80:
                 return "Z"
+            if index_middle >= 0.12 and index_pinky <= 0.72 and th_ix_tip > 0.34 and th_mid_tip > 0.34:
+                return "SPACE"
         else:
             return "SPACE"
 
