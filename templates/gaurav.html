@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gaurav Thakare | Worldbuilding Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+    --bg:#030705;
+    --panel:rgba(7,15,11,.72);
+    --line:rgba(112,201,147,.14);
+    --text:#edf7f0;
+    --muted:#8ea799;
+    --soft:#c7dbc9;
+    --cyan:#6fda9b;
+    --blue:#2b5f42;
+    --orange:#b2ff7d;
+    --glow-cyan:rgba(111,218,155,.24);
+    --shadow:0 30px 80px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+section[id]{scroll-margin-top:110px}
+body{
+    min-height:100vh;
+    font-family:'Outfit',sans-serif;
+    color:var(--text);
+    background:
+        radial-gradient(circle at 18% 16%, rgba(111,218,155,.12), transparent 25%),
+        radial-gradient(circle at 84% 12%, rgba(178,255,125,.1), transparent 22%),
+        radial-gradient(circle at 50% 108%, rgba(43,95,66,.28), transparent 34%),
+        linear-gradient(160deg, #010302 0%, #07100b 40%, #020503 100%);
+    overflow-x:hidden;
+}
+body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:
+        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+    background-size:52px 52px;
+    mask-image:radial-gradient(circle at center, black 28%, transparent 80%);
+    pointer-events:none;
+    opacity:.42;
+}
+body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:linear-gradient(180deg, rgba(255,255,255,.05), transparent 18%, transparent 82%, rgba(255,255,255,.03));
+    mix-blend-mode:soft-light;
+    pointer-events:none;
+}
+a{text-decoration:none;color:inherit}
+.shell{width:min(1240px,calc(100% - 32px));margin:0 auto}
+.nav{
+    position:sticky;
+    top:0;
+    z-index:40;
+    backdrop-filter:blur(18px);
+    background:rgba(3,8,5,.6);
+    border-bottom:1px solid rgba(111,218,155,.08);
+}
+.nav-inner{
+    padding:18px 0;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+}
+.brand{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+}
+.brand strong,
+.hero-name,
+.section-title,
+.panel-label,
+.signal-card strong,
+.module h3,
+.timeline-card h3,
+.footer-mark{
+    font-family:'Sora',sans-serif;
+}
+.brand strong{font-size:1rem;letter-spacing:.08em;text-transform:uppercase}
+.brand span{font-size:.82rem;color:var(--muted)}
+.nav-links{
+    display:flex;
+    gap:18px;
+    flex-wrap:wrap;
+    font-size:.9rem;
+    color:var(--muted);
+}
+.nav-links a{
+    padding:8px 0;
+    position:relative;
+    transition:color .2s ease;
+}
+.nav-links a:focus-visible,
+.btn:focus-visible,
+.mode-button:focus-visible,
+[data-project-card]:focus-visible,
+.timeline-card:focus-visible,
+.contact-list a:focus-visible{
+    outline:2px solid var(--orange);
+    outline-offset:4px;
+}
+.nav-links a::after{
+    content:"";
+    position:absolute;
+    left:0;
+    bottom:0;
+    width:100%;
+    height:1px;
+    background:linear-gradient(90deg, transparent, var(--cyan), transparent);
+    transform:scaleX(.25);
+    opacity:0;
+    transition:transform .25s ease, opacity .25s ease;
+}
+.nav-links a:hover{color:var(--text)}
+.nav-links a:hover::after{transform:scaleX(1);opacity:1}
+main{padding:28px 0 48px}
+.hero{
+    position:relative;
+    padding:38px 0 42px;
+    display:grid;
+    grid-template-columns:1.05fr .95fr;
+    gap:24px;
+    perspective:1400px;
+}
+.hero-copy,
+.hero-stage,
+.section-wrap,
+.module,
+.timeline-card,
+.contact-panel,
+.signal-card{
+    background:linear-gradient(180deg, rgba(12,22,16,.74), rgba(5,10,7,.88));
+    border:1px solid var(--line);
+    box-shadow:var(--shadow);
+    backdrop-filter:blur(16px);
+}
+.hero-copy,
+.hero-stage{border-radius:34px;position:relative;overflow:hidden}
+.hero-copy{
+    padding:34px;
+    transform:rotateX(4deg) rotateY(-3deg);
+    transform-style:preserve-3d;
+    transition:transform .18s ease-out, border-color .2s ease, box-shadow .2s ease;
+}
+.hero-copy::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+        linear-gradient(135deg, rgba(111,218,155,.1), transparent 36%),
+        radial-gradient(circle at 80% 20%, rgba(178,255,125,.14), transparent 22%);
+    pointer-events:none;
+}
+.hero-copy::after{
+    content:"";
+    position:absolute;
+    inset:18px;
+    border:1px solid rgba(111,218,155,.08);
+    border-radius:26px;
+    pointer-events:none;
+}
+.hero-eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    padding:9px 14px;
+    margin-bottom:22px;
+    border-radius:999px;
+    border:1px solid rgba(111,218,155,.18);
+    background:rgba(111,218,155,.08);
+    color:var(--cyan);
+    font-size:.8rem;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+}
+.hero-name{
+    font-size:clamp(3.1rem, 7vw, 6.4rem);
+    line-height:.88;
+    letter-spacing:-.04em;
+    max-width:8ch;
+    margin-bottom:18px;
+}
+.hero-role{
+    font-size:1.02rem;
+    color:var(--soft);
+    margin-bottom:18px;
+}
+.hero-lead{
+    max-width:60ch;
+    font-size:1.06rem;
+    line-height:1.82;
+    color:var(--muted);
+}
+.hero-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-top:28px;
+}
+.btn{
+    min-height:50px;
+    padding:0 20px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid transparent;
+    transition:transform .24s ease, box-shadow .24s ease, border-color .24s ease;
+}
+.btn:hover{transform:translateY(-3px)}
+.btn-primary{
+    background:linear-gradient(90deg, #8cf56a, var(--orange));
+    color:#081008;
+    font-weight:800;
+    box-shadow:0 14px 32px rgba(111,218,155,.22);
+}
+.btn-secondary{
+    background:rgba(111,218,155,.07);
+    border-color:rgba(111,218,155,.18);
+    color:var(--text);
+}
+.tech-stack{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:18px;
+}
+.tech-stack span{
+    padding:9px 12px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.08);
+    background:rgba(255,255,255,.04);
+    color:var(--soft);
+    font-size:.82rem;
+}
+.hero-stage{
+    padding:24px;
+    display:grid;
+    gap:18px;
+    transform:rotateX(3deg) rotateY(4deg);
+    transition:transform .18s ease-out, border-color .2s ease, box-shadow .2s ease;
+}
+.stage-window{
+    position:relative;
+    min-height:420px;
+    border-radius:28px;
+    overflow:hidden;
+    background:
+        radial-gradient(circle at 50% 34%, rgba(111,218,155,.12), transparent 30%),
+        linear-gradient(180deg, rgba(111,218,155,.05), rgba(4,8,5,.92));
+    border:1px solid rgba(111,218,155,.12);
+    --mx:50%;
+    --my:50%;
+}
+.stage-window::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(255,255,255,.06), transparent 14%, transparent 86%, rgba(255,255,255,.04));
+    pointer-events:none;
+}
+.stage-window::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:radial-gradient(circle at var(--mx) var(--my), rgba(178,255,125,.18), transparent 22%);
+    pointer-events:none;
+    opacity:.9;
+}
+.scanlines{
+    position:absolute;
+    inset:0;
+    background:repeating-linear-gradient(180deg, rgba(255,255,255,.05) 0, rgba(255,255,255,.05) 1px, transparent 1px, transparent 6px);
+    opacity:.14;
+    pointer-events:none;
+}
+.stage-grid{
+    position:absolute;
+    inset:auto -10% -8% -10%;
+    height:68%;
+    background-image:
+        linear-gradient(rgba(111,218,155,.22) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(111,218,155,.22) 1px, transparent 1px);
+    background-size:44px 44px;
+    transform:perspective(1100px) rotateX(78deg) scale(1.18);
+    transform-origin:bottom;
+    opacity:.55;
+}
+.level-scene,
+.level-base,
+.level-top,
+.level-side,
+.level-ramp,
+.level-block,
+.level-beacon,
+.level-beacon-core,
+.level-beacon-ring,
+.level-node,
+.floating-panel,
+.beam{position:absolute}
+.mode-switcher{
+    position:relative;
+    z-index:2;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:18px;
+}
+.mode-button{
+    position:relative;
+    min-height:40px;
+    padding:0 14px;
+    border-radius:999px;
+    border:1px solid rgba(111,218,155,.14);
+    background:rgba(255,255,255,.04);
+    color:var(--soft);
+    cursor:pointer;
+    font:inherit;
+    transition:background .2s ease, border-color .2s ease, transform .2s ease, color .2s ease;
+}
+.mode-button:hover{transform:translateY(-2px)}
+.mode-button.is-active{
+    background:rgba(178,255,125,.12);
+    border-color:rgba(178,255,125,.26);
+    color:var(--text);
+}
+.level-scene{
+    width:320px;
+    height:248px;
+    left:calc(50% - 160px);
+    top:94px;
+    transform-style:preserve-3d;
+    transform:rotateX(62deg) rotateZ(-36deg);
+    animation:levelFloat 7s ease-in-out infinite;
+    filter:drop-shadow(0 30px 42px rgba(0,0,0,.42));
+}
+.level-base{
+    inset:0;
+    transform-style:preserve-3d;
+}
+.level-top{
+    position:absolute;
+    inset:0;
+    border-radius:30px;
+    background:
+        linear-gradient(135deg, rgba(18,44,24,.95), rgba(8,18,11,.98)),
+        repeating-linear-gradient(90deg, rgba(111,218,155,.08) 0, rgba(111,218,155,.08) 16px, transparent 16px, transparent 32px);
+    border:1px solid rgba(178,255,125,.16);
+    overflow:hidden;
+}
+.level-top::before{
+    content:"";
+    position:absolute;
+    inset:18px;
+    border-radius:22px;
+    border:1px solid rgba(111,218,155,.12);
+}
+.level-side{
+    position:absolute;
+    left:18px;
+    right:18px;
+    bottom:-38px;
+    height:50px;
+    border-radius:0 0 24px 24px;
+    background:linear-gradient(180deg, rgba(14,28,17,.98), rgba(4,8,5,.98));
+    transform:skewX(-44deg);
+}
+.level-ramp,
+.level-block{
+    position:absolute;
+    background:linear-gradient(180deg, rgba(28,70,40,.96), rgba(10,22,13,.98));
+    border:1px solid rgba(178,255,125,.16);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);
+}
+.level-ramp{
+    left:76px;
+    top:112px;
+    width:152px;
+    height:28px;
+    border-radius:18px;
+    transform:skewX(-32deg);
+}
+.level-block.block-a{left:44px;top:48px;width:60px;height:60px;border-radius:16px}
+.level-block.block-b{right:52px;top:70px;width:78px;height:86px;border-radius:18px}
+.level-block.block-c{right:126px;bottom:38px;width:54px;height:54px;border-radius:14px}
+.level-beacon{
+    left:206px;
+    top:52px;
+    width:64px;
+    height:118px;
+}
+.level-beacon-core{
+    position:absolute;
+    left:22px;
+    top:22px;
+    width:20px;
+    height:74px;
+    border-radius:999px;
+    background:linear-gradient(180deg, rgba(237,247,240,.82), rgba(178,255,125,.82), rgba(111,218,155,.28));
+    box-shadow:0 0 26px rgba(178,255,125,.32);
+}
+.level-beacon-ring{
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:96px;
+    height:36px;
+    margin-left:-48px;
+    margin-top:-18px;
+    border-radius:50%;
+    border:1px solid rgba(178,255,125,.2);
+    animation:beaconPulse 4.6s ease-in-out infinite;
+}
+.level-beacon-ring.ring-2{
+    width:126px;
+    height:48px;
+    margin-left:-63px;
+    margin-top:-24px;
+    animation-delay:1.2s;
+}
+.level-node{
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(237,247,240,.95), rgba(111,218,155,.55));
+    box-shadow:0 0 18px rgba(178,255,125,.25);
+}
+.node-a{left:42px;bottom:56px}
+.node-b{left:146px;top:128px}
+.node-c{right:56px;bottom:66px}
+.scene-glow{
+    width:240px;
+    height:240px;
+    left:calc(50% - 120px);
+    top:104px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(111,218,155,.18), transparent 70%);
+    filter:blur(12px);
+}
+.floating-panel{
+    padding:14px 16px;
+    border-radius:18px;
+    background:rgba(8,16,11,.76);
+    border:1px solid rgba(111,218,155,.18);
+    color:var(--soft);
+    font-size:.88rem;
+    box-shadow:0 18px 36px rgba(0,0,0,.25);
+}
+.floating-panel strong{
+    display:block;
+    margin-bottom:4px;
+    color:var(--text);
+    font-family:'Sora',sans-serif;
+    font-size:.88rem;
+}
+.panel-top{top:34px;left:28px;max-width:190px}
+.panel-right{right:24px;top:156px;max-width:170px}
+.panel-bottom{left:42px;bottom:46px;max-width:190px}
+.beam{
+    left:50%;
+    bottom:90px;
+    width:240px;
+    height:2px;
+    background:linear-gradient(90deg, transparent, var(--orange), transparent);
+    transform:translateX(-50%);
+    box-shadow:0 0 18px rgba(178,255,125,.32);
+}
+.stage-caption{color:var(--muted);line-height:1.8}
+.stage-status{
+    position:relative;
+    z-index:2;
+    display:grid;
+    gap:8px;
+    padding:14px 16px;
+    border-radius:18px;
+    background:rgba(255,255,255,.03);
+    border:1px solid rgba(111,218,155,.1);
+}
+.stage-status strong{
+    font-family:'Sora',sans-serif;
+    font-size:.92rem;
+}
+.stage-status span{
+    color:var(--muted);
+    line-height:1.7;
+    font-size:.92rem;
+}
+.hero-stats{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+    margin-top:6px;
+}
+.signal-card{
+    border-radius:24px;
+    padding:18px;
+    position:relative;
+    overflow:hidden;
+}
+.signal-card::after{
+    content:"";
+    position:absolute;
+    inset:auto -50px -60px auto;
+    width:160px;
+    height:160px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(111,218,155,.12), transparent 68%);
+}
+.signal-card strong{
+    display:block;
+    font-size:1.55rem;
+    margin-bottom:10px;
+}
+.signal-card p{
+    color:var(--muted);
+    line-height:1.7;
+    position:relative;
+    z-index:1;
+}
+section{padding:18px 0 26px}
+.section-wrap{
+    border-radius:32px;
+    padding:30px;
+    position:relative;
+    overflow:hidden;
+}
+.section-wrap::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+        linear-gradient(120deg, rgba(111,218,155,.05), transparent 26%),
+        radial-gradient(circle at 90% 10%, rgba(178,255,125,.1), transparent 20%);
+    pointer-events:none;
+}
+.section-head{
+    display:grid;
+    gap:10px;
+    margin-bottom:24px;
+    max-width:860px;
+}
+.section-kicker{
+    color:var(--cyan);
+    font-size:.8rem;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+}
+.section-title{
+    font-size:clamp(2rem, 4vw, 3rem);
+    line-height:1.02;
+    letter-spacing:-.03em;
+}
+.section-head p,
+.about-copy p,
+.module p,
+.timeline-card p,
+.contact-panel p{color:var(--muted);line-height:1.85}
+.about-grid,
+.skills-grid,
+.projects-grid,
+.contact-grid{
+    display:grid;
+    gap:20px;
+}
+.about-grid{grid-template-columns:1.05fr .95fr}
+.about-copy{display:grid;gap:16px}
+.manifesto{
+    border-radius:28px;
+    padding:28px;
+    background:
+        linear-gradient(180deg, rgba(111,218,155,.08), rgba(43,95,66,.04)),
+        rgba(6,12,8,.74);
+    border:1px solid rgba(111,218,155,.18);
+    position:relative;
+    overflow:hidden;
+}
+.manifesto::after{
+    content:"";
+    position:absolute;
+    right:-20px;
+    top:-20px;
+    width:140px;
+    height:140px;
+    border-radius:28px;
+    border:1px solid rgba(178,255,125,.14);
+    transform:rotate(22deg);
+}
+.panel-label{
+    display:block;
+    margin-bottom:12px;
+    color:var(--orange);
+    font-size:.82rem;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+}
+.skills-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.projects-grid{grid-template-columns:repeat(2,1fr)}
+.project-preview{
+    position:relative;
+    display:grid;
+    gap:16px;
+    margin-bottom:22px;
+    padding:22px;
+    border-radius:26px;
+    background:linear-gradient(180deg, rgba(16,32,21,.84), rgba(7,12,9,.92));
+    border:1px solid rgba(111,218,155,.14);
+    box-shadow:var(--shadow);
+}
+.preview-meta{
+    position:relative;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+}
+.preview-meta span{
+    padding:7px 11px;
+    border-radius:999px;
+    background:rgba(111,218,155,.07);
+    border:1px solid rgba(111,218,155,.14);
+    color:var(--soft);
+    font-size:.8rem;
+}
+.preview-points{
+    position:relative;
+    list-style:none;
+    display:grid;
+    gap:10px;
+}
+.preview-points li{
+    position:relative;
+    padding-left:14px;
+    color:var(--muted);
+    line-height:1.7;
+}
+.preview-points li::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:10px;
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:var(--orange);
+}
+.module.is-selected{
+    border-color:rgba(178,255,125,.28);
+    box-shadow:0 22px 56px rgba(0,0,0,.34);
+}
+.timeline-card{
+    cursor:pointer;
+    transition:border-color .22s ease, transform .22s ease, background .22s ease;
+}
+.timeline-card:hover{transform:translateY(-4px)}
+.timeline-card.is-open{
+    border-color:rgba(178,255,125,.24);
+    background:linear-gradient(180deg, rgba(18,36,22,.82), rgba(7,12,9,.92));
+}
+.timeline-detail{
+    max-height:0;
+    overflow:hidden;
+    color:var(--muted);
+    line-height:1.75;
+    transition:max-height .28s ease, margin-top .28s ease;
+}
+.timeline-card.is-open .timeline-detail{
+    max-height:120px;
+    margin-top:10px;
+}
+.module{
+    border-radius:28px;
+    padding:24px;
+    position:relative;
+    overflow:hidden;
+    transition:transform .28s ease, border-color .28s ease, box-shadow .28s ease;
+    transform-style:preserve-3d;
+}
+.module::before{
+    content:"";
+    position:absolute;
+    inset:1px;
+    border-radius:26px;
+    border:1px solid rgba(255,255,255,.04);
+    pointer-events:none;
+}
+.module::after{
+    content:"";
+    position:absolute;
+    inset:auto -40px -70px auto;
+    width:180px;
+    height:180px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(178,255,125,.09), transparent 68%);
+    pointer-events:none;
+}
+.module:hover{
+    transform:translateY(-8px) rotateX(4deg) rotateY(-4deg);
+    border-color:rgba(111,218,155,.26);
+    box-shadow:0 26px 60px rgba(0,0,0,.38);
+}
+.module h3{
+    margin-bottom:14px;
+    font-size:1.1rem;
+    letter-spacing:.05em;
+    position:relative;
+    z-index:1;
+}
+.badge{
+    display:inline-flex;
+    margin-bottom:12px;
+    padding:6px 11px;
+    border-radius:999px;
+    border:1px solid rgba(178,255,125,.18);
+    background:rgba(178,255,125,.08);
+    color:#dcf8c9;
+    font-size:.76rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    position:relative;
+    z-index:1;
+}
+.chips,
+.project-points{
+    list-style:none;
+    position:relative;
+    z-index:1;
+}
+.chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:18px;
+}
+.chips li{
+    padding:8px 12px;
+    border-radius:999px;
+    background:rgba(111,218,155,.06);
+    border:1px solid rgba(111,218,155,.14);
+    color:var(--soft);
+    font-size:.83rem;
+}
+.project-points{
+    display:grid;
+    gap:10px;
+    margin-top:18px;
+}
+.project-points li{
+    padding-left:14px;
+    position:relative;
+    color:var(--muted);
+    line-height:1.7;
+}
+.project-points li::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:10px;
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:var(--cyan);
+    box-shadow:0 0 10px var(--glow-cyan);
+}
+.timeline{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:18px;
+}
+.timeline-card{
+    border-radius:26px;
+    padding:24px;
+    position:relative;
+}
+.timeline-card::before{
+    content:attr(data-step);
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:44px;
+    height:44px;
+    margin-bottom:14px;
+    border-radius:14px;
+    background:rgba(111,218,155,.08);
+    border:1px solid rgba(111,218,155,.18);
+    color:var(--cyan);
+    font-family:'Sora',sans-serif;
+}
+.timeline-card h3{margin-bottom:10px}
+.contact-grid{grid-template-columns:1.1fr .9fr}
+.contact-panel{
+    border-radius:28px;
+    padding:24px;
+}
+.contact-list{
+    list-style:none;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    margin-top:10px;
+}
+.contact-list li{
+    padding:12px 14px;
+    border-radius:18px;
+    background:rgba(255,255,255,.03);
+    border:1px solid rgba(255,255,255,.06);
+}
+.contact-list span{
+    display:block;
+    margin-bottom:4px;
+    color:var(--cyan);
+    font-size:.8rem;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+}
+.contact-list a{
+    color:var(--text);
+    text-decoration:underline;
+    text-decoration-color:rgba(178,255,125,.45);
+    text-underline-offset:3px;
+}
+.contact-list a:hover{
+    color:var(--orange);
+    text-decoration-color:var(--orange);
+}
+.footer{
+    padding-top:10px;
+    text-align:center;
+    color:var(--muted);
+    font-size:.9rem;
+}
+.footer-mark{
+    display:block;
+    margin-bottom:8px;
+    color:var(--soft);
+    letter-spacing:.16em;
+    text-transform:uppercase;
+}
+@keyframes levelFloat{
+    0%,100%{transform:rotateX(62deg) rotateZ(-36deg) translateY(0)}
+    50%{transform:rotateX(62deg) rotateZ(-36deg) translateY(-9px)}
+}
+@keyframes beaconPulse{
+    0%,100%{transform:scale(.92);opacity:.45}
+    50%{transform:scale(1.08);opacity:.92}
+}
+@media (max-width:1024px){
+    .hero,
+    .about-grid,
+    .skills-grid,
+    .projects-grid,
+    .timeline,
+    .contact-grid{grid-template-columns:1fr}
+    .hero-stats{grid-template-columns:1fr}
+    .hero-copy,
+    .hero-stage{transform:none}
+}
+@media (max-width:720px){
+    .nav-inner{flex-direction:column;align-items:flex-start}
+    .hero{padding-top:24px}
+    .hero-copy,
+    .hero-stage,
+    .section-wrap{padding:22px;border-radius:24px}
+    .hero-name{font-size:clamp(2.7rem, 16vw, 4.4rem)}
+    .stage-window{min-height:320px}
+    .mode-switcher{gap:8px;margin-top:16px}
+    section[id]{scroll-margin-top:140px}
+    .level-scene{width:248px;height:188px;left:calc(50% - 124px);top:128px}
+    .scene-glow{width:190px;height:190px;left:calc(50% - 95px);top:128px}
+    .level-ramp{left:52px;top:88px;width:126px}
+    .level-block.block-a{left:28px;top:28px}
+    .level-block.block-b{right:34px;top:52px;width:62px;height:70px}
+    .level-block.block-c{right:102px;bottom:24px}
+    .level-beacon{left:160px;top:24px}
+    .panel-right{right:14px;top:130px}
+    .panel-top,
+    .panel-bottom{left:16px}
+}
+</style>
+</head>
+<body>
+<nav class="nav">
+    <div class="shell nav-inner">
+        <div class="brand">
+            <strong>Gaurav Thakare</strong>
+            <span>Aspiring 3D Artist • Game Developer • Creative Technologist</span>
+        </div>
+        <div class="nav-links">
+            <a href="#about">About</a>
+            <a href="#skills">Technical Foundation</a>
+            <a href="#projects">Projects</a>
+            <a href="#roadmap">Roadmap</a>
+            <a href="#contact">Contact</a>
+        </div>
+    </div>
+</nav>
+<main class="shell">
+    <section class="hero">
+        <div class="hero-copy" data-tilt data-tilt-strength="10">
+            <div class="hero-eyebrow">Portfolio Profile // 3D Art and Game Development</div>
+            <h1 class="hero-name">Gaurav Thakare</h1>
+            <div class="hero-role">Aspiring 3D Artist | Game Development Learner</div>
+            <p class="hero-lead">
+                Entry-level creator building a foundation in 3D art, game development, and interactive workflows through Blender practice, engine exploration, and hands-on project work including SAMVAAD.
+            </p>
+            <div class="hero-actions">
+                <a class="btn btn-primary" href="#projects">View Projects</a>
+                <a class="btn btn-secondary" href="#contact">Contact</a>
+            </div>
+            <div class="mode-switcher" data-mode-switcher>
+                <button class="mode-button is-active" type="button" data-mode="focus">Current Focus</button>
+                <button class="mode-button" type="button" data-mode="projects">Projects</button>
+                <button class="mode-button" type="button" data-mode="future">Future Direction</button>
+            </div>
+            <div class="tech-stack">
+                <span>Blender</span>
+                <span>Unity</span>
+                <span>Unreal Engine</span>
+                <span>Python</span>
+                <span>C#</span>
+                <span>Beginner AI Learning</span>
+                <span>Worldbuilding</span>
+            </div>
+        </div>
+        <div class="hero-stage" data-tilt data-tilt-strength="12">
+            <div class="stage-window" data-stage-light>
+                <div class="scanlines"></div>
+                <div class="stage-grid"></div>
+                <div class="scene-glow"></div>
+                <div class="level-scene" data-scene-root>
+                    <div class="level-base">
+                        <div class="level-top">
+                            <div class="level-ramp"></div>
+                            <div class="level-block block-a"></div>
+                            <div class="level-block block-b"></div>
+                            <div class="level-block block-c"></div>
+                            <div class="level-beacon">
+                                <div class="level-beacon-core"></div>
+                                <div class="level-beacon-ring"></div>
+                                <div class="level-beacon-ring ring-2"></div>
+                            </div>
+                            <div class="level-node node-a"></div>
+                            <div class="level-node node-b"></div>
+                            <div class="level-node node-c"></div>
+                        </div>
+                        <div class="level-side"></div>
+                    </div>
+                </div>
+                <div class="floating-panel panel-top">
+                    <strong data-stage-title>Current Focus</strong>
+                    <span data-stage-copy>Building foundations in Blender, Unity, and beginner workflow thinking.</span>
+                </div>
+                <div class="floating-panel panel-right">
+                    <strong>Status</strong>
+                    Learning steadily and turning practice into stronger work.
+                </div>
+                <div class="floating-panel panel-bottom">
+                    <strong>Current Anchor</strong>
+                    SAMVAAD alongside consistent 3D and engine practice.
+                </div>
+                <div class="beam"></div>
+            </div>
+            <div class="stage-status">
+                <strong data-status-title>Current Focus</strong>
+                <span data-status-copy>Practicing 3D foundations, engine familiarity, and beginner coding through small but consistent builds.</span>
+            </div>
+            <p class="stage-caption">
+                This page is designed to reflect both where I am now and the direction I am growing toward as an artist and developer.
+            </p>
+        </div>
+    </section>
+
+    <div class="hero-stats">
+        <article class="signal-card">
+            <strong>01</strong>
+            <p>Building practical ability in Blender, digital form, scene composition, and visual decision-making.</p>
+        </article>
+        <article class="signal-card">
+            <strong>02</strong>
+            <p>Developing working familiarity with Python, C#, Unity, and Unreal through structured learning and experimentation.</p>
+        </article>
+        <article class="signal-card">
+            <strong>03</strong>
+            <p>Using real project work like SAMVAAD to turn learning into tangible, portfolio-ready progress.</p>
+        </article>
+    </div>
+
+    <section id="about">
+        <div class="section-wrap">
+            <div class="section-head">
+                <span class="section-kicker">About</span>
+                <h2 class="section-title">A focused early-career path shaped by consistent practice and real project work.</h2>
+            </div>
+            <div class="about-grid">
+                <div class="about-copy">
+                    <p>
+                        I am building an entry-level foundation in 3D art and game development, with a growing interest in environments, interactive experiences, and digital production workflows. My current work is centered on Blender practice, Unity familiarity, and programming basics.
+                    </p>
+                    <p>
+                        This portfolio reflects a serious starting point: steady skill-building, hands-on experimentation, and a clear direction toward stronger 3D and interactive development work. I am actively improving in modeling, topology, lighting, prototyping, gameplay thinking, and technical problem-solving.
+                    </p>
+                </div>
+                <div class="manifesto">
+                    <span class="panel-label">Creative Direction</span>
+                    <p>
+                        My long-term goal is to grow into stronger 3D art and game development work, with particular interest in worldbuilding, gameplay systems, technical art, and interactive media. Right now, that means building strong fundamentals and turning practice into better-quality projects.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="skills">
+        <div class="section-wrap">
+            <div class="section-head">
+                <span class="section-kicker">Technical Foundation</span>
+                <h2 class="section-title">Core tools, current learning, and the areas I am building toward next.</h2>
+                <p>
+                    This section separates current capability from future direction so the profile stays clear, honest, and recruiter-friendly.
+                </p>
+            </div>
+            <div class="skills-grid">
+                <article class="module" data-tilt data-tilt-strength="8">
+                    <span class="badge">Current Focus</span>
+                    <h3>3D Foundations</h3>
+                    <p>
+                        Building hands-on understanding of form, presentation, and basic asset workflow through Blender-centered study and regular practice.
+                    </p>
+                    <ul class="chips">
+                        <li>Blender</li>
+                        <li>Modeling Practice</li>
+                        <li>Scene Organization</li>
+                        <li>Basic Asset Handling</li>
+                        <li>Topology Fundamentals</li>
+                        <li>Lighting Basics</li>
+                        <li>Rendering Basics</li>
+                    </ul>
+                </article>
+                <article class="module" data-tilt data-tilt-strength="8">
+                    <span class="badge">Current Focus</span>
+                    <h3>Programming Basics</h3>
+                    <p>
+                        Building comfort with structure, scripting, logic, and problem-solving through small coding exercises and technical practice.
+                    </p>
+                    <ul class="chips">
+                        <li>Python - actively learning</li>
+                        <li>C# - actively learning</li>
+                        <li>Logic Building</li>
+                        <li>Problem Solving</li>
+                        <li>Systems Thinking</li>
+                    </ul>
+                </article>
+                <article class="module" data-tilt data-tilt-strength="8">
+                    <span class="badge">Active Learning</span>
+                    <h3>Game Engine Workflow</h3>
+                    <p>
+                        Developing familiarity with engine workflows, interactive scene building, and prototype thinking through Unity-based exploration.
+                    </p>
+                    <ul class="chips">
+                        <li>Unity - learning through prototypes</li>
+                        <li>Scene Setup</li>
+                        <li>Prefab Basics</li>
+                        <li>Model Integration</li>
+                        <li>Interactive Design Thinking</li>
+                    </ul>
+                </article>
+                <article class="module" data-tilt data-tilt-strength="8">
+                    <span class="badge">Exploring Next</span>
+                    <h3>Future Direction</h3>
+                    <p>
+                        These are the areas I plan to explore more deeply as my technical base becomes stronger and my direction becomes more specialized.
+                    </p>
+                    <ul class="chips">
+                        <li>Technical Art</li>
+                        <li>Gameplay Systems</li>
+                        <li>Unreal Engine</li>
+                        <li>Beginner AI Learning</li>
+                        <li>Character Workflows</li>
+                        <li>Animation Concepts</li>
+                    </ul>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section id="projects">
+        <div class="section-wrap">
+            <div class="section-head">
+                <span class="section-kicker">Projects</span>
+                <h2 class="section-title">Projects that show hands-on work, technical growth, and clear momentum.</h2>
+                <p>
+                    These projects highlight practical work, technical learning, and the ability to improve through iteration rather than theory alone.
+                </p>
+            </div>
+            <div class="project-preview" data-project-preview>
+                <span class="badge" data-preview-badge>Featured Project</span>
+                <h3 data-preview-title>SAMVAAD</h3>
+                <p data-preview-copy>Accessibility-focused multimodal communication system developed as a final-year team project using Python, OpenCV, and MediaPipe for sign and Braille-oriented interaction.</p>
+                <div class="preview-meta" data-preview-meta>
+                    <span>Python</span>
+                    <span>OpenCV</span>
+                    <span>MediaPipe</span>
+                    <span>Accessibility</span>
+                </div>
+                <ul class="preview-points" data-preview-points>
+                    <li>Contributed heavily to interface behavior, interaction flow, and core feature integration across the application.</li>
+                    <li>Worked on sign-recognition and gesture-handling workflows using Python, OpenCV, and MediaPipe.</li>
+                    <li>Built and refined Braille-related recognition and text-processing features to support accessibility goals.</li>
+                </ul>
+            </div>
+            <div class="projects-grid">
+                <article class="module is-selected" data-tilt data-tilt-strength="8" data-project-card tabindex="0" role="button" aria-pressed="true" aria-label="Show project details for SAMVAAD" data-project-badge="Featured Project" data-project-title="SAMVAAD" data-project-copy="Accessibility-focused multimodal communication system developed as a final-year team project using Python, OpenCV, and MediaPipe for sign and Braille-oriented interaction." data-project-meta="Python|OpenCV|MediaPipe|Accessibility" data-project-points="Contributed heavily to interface behavior, interaction flow, and core feature integration across the application.|Worked on sign-recognition and gesture-handling workflows using Python, OpenCV, and MediaPipe.|Built and refined Braille-related recognition and text-processing features to support accessibility goals.">
+                    <span class="badge">Featured Project</span>
+                    <h3>SAMVAAD</h3>
+                    <p>
+                        Accessibility-focused multimodal communication system developed as a final-year team project using Python, OpenCV, and MediaPipe for sign and Braille-oriented interaction.
+                    </p>
+                    <ul class="project-points">
+                        <li>Contributed heavily to interface behavior, interaction flow, and core feature integration across the application.</li>
+                        <li>Worked on sign-recognition and gesture-handling workflows using Python, OpenCV, and MediaPipe.</li>
+                        <li>Built and refined Braille-related recognition and text-processing features to support accessibility goals.</li>
+                        <li>Improved usability, presentation quality, and system behavior through testing and iteration.</li>
+                    </ul>
+                </article>
+                <article class="module" data-tilt data-tilt-strength="8" data-project-card tabindex="0" role="button" aria-pressed="false" aria-label="Show project details for 3D Modeling Practice" data-project-badge="Learning Project" data-project-title="3D Modeling Practice" data-project-copy="Ongoing Blender practice focused on understanding form, shape discipline, cleaner topology habits, and stronger visual presentation." data-project-meta="Blender|Modeling|Lighting|Presentation" data-project-points="Practicing composition, object construction, and scene presence.|Exploring lighting and rendering to make work feel more intentional.|Using repetition to build confidence from the ground up.">
+                    <span class="badge">Learning Project</span>
+                    <h3>3D Modeling Practice</h3>
+                    <p>
+                        Ongoing Blender practice focused on understanding form, shape discipline, cleaner topology habits, and stronger visual presentation.
+                    </p>
+                    <ul class="project-points">
+                        <li>Practicing composition, object construction, and scene presence.</li>
+                        <li>Exploring lighting and rendering to make work feel more intentional.</li>
+                        <li>Using repetition to build confidence from the ground up.</li>
+                    </ul>
+                </article>
+                <article class="module" data-tilt data-tilt-strength="8" data-project-card tabindex="0" role="button" aria-pressed="false" aria-label="Show project details for Python Logic Projects" data-project-badge="Learning Project" data-project-title="Python Logic Projects" data-project-copy="Small programming exercises and logic-focused experiments designed to strengthen problem-solving, code structure, and technical confidence as a beginner developer." data-project-meta="Python|Problem Solving|Systems Thinking|Practice" data-project-points="Learning how systems behave through code instead of only theory.|Improving comfort with breaking larger problems into manageable pieces.|Creating a base for more technical gameplay and prototype work later.">
+                    <span class="badge">Learning Project</span>
+                    <h3>Python Logic Projects</h3>
+                    <p>
+                        Small programming exercises and logic-focused experiments designed to strengthen problem-solving, code structure, and technical confidence as a beginner developer.
+                    </p>
+                    <ul class="project-points">
+                        <li>Learning how systems behave through code instead of only theory.</li>
+                        <li>Improving comfort with breaking larger problems into manageable pieces.</li>
+                        <li>Creating a base for more technical gameplay and prototype work later.</li>
+                    </ul>
+                </article>
+                <article class="module" data-tilt data-tilt-strength="8" data-project-card tabindex="0" role="button" aria-pressed="false" aria-label="Show project details for Unity and Unreal Engine Practice" data-project-badge="Exploration Track" data-project-title="Unity &amp; Unreal Engine Practice" data-project-copy="Early-stage engine learning focused on scenes, workflow familiarity, prototype thinking, and understanding how interactive experiences come together inside a game engine." data-project-meta="Unity|Unreal Engine|Scenes|Prototype Thinking" data-project-points="Exploring how assets, environments, and logic connect inside engines.|Building beginner-level familiarity with game development pipelines.|Preparing for stronger environment and gameplay experiments ahead.">
+                    <span class="badge">Exploration Track</span>
+                    <h3>Unity &amp; Unreal Engine Practice</h3>
+                    <p>
+                        Early-stage engine learning focused on scenes, workflow familiarity, prototype thinking, and understanding how interactive experiences come together inside a game engine.
+                    </p>
+                    <ul class="project-points">
+                        <li>Exploring how assets, environments, and logic connect inside engines.</li>
+                        <li>Building beginner-level familiarity with game development pipelines.</li>
+                        <li>Preparing for stronger environment and gameplay experiments ahead.</li>
+                    </ul>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section id="roadmap">
+        <div class="section-wrap">
+            <div class="section-head">
+                <span class="section-kicker">Roadmap</span>
+                <h2 class="section-title">The path from current practice to stronger portfolio work.</h2>
+            </div>
+            <div class="timeline">
+                <article class="timeline-card is-open" data-step="01" tabindex="0" role="button" aria-expanded="true" aria-controls="timeline-detail-now" aria-label="Toggle roadmap details for Now">
+                    <h3>Now</h3>
+                    <p>
+                        Strengthening Blender fundamentals, visual form, Unity familiarity, and programming logic through regular practice and small but meaningful builds.
+                    </p>
+                    <div class="timeline-detail" id="timeline-detail-now">This stage is about repetition, clarity, and building comfort with the tools that matter most to your long-term direction.</div>
+                </article>
+                <article class="timeline-card" data-step="02" tabindex="0" role="button" aria-expanded="false" aria-controls="timeline-detail-next" aria-label="Toggle roadmap details for Next">
+                    <h3>Next</h3>
+                    <p>
+                        Building beginner prototypes in Unity, becoming more comfortable with C#, and exploring areas like technical art, Unreal Engine, and AI in a more structured way.
+                    </p>
+                    <div class="timeline-detail" id="timeline-detail-next">The next step is turning isolated learning into small portfolio pieces that show stronger engine workflow and technical confidence.</div>
+                </article>
+                <article class="timeline-card" data-step="03" tabindex="0" role="button" aria-expanded="false" aria-controls="timeline-detail-building" aria-label="Toggle roadmap details for Building Toward">
+                    <h3>Building Toward</h3>
+                    <p>
+                        A stronger portfolio in 3D art and interactive development with better environments, stronger systems, and more polished work aimed at internship and junior-role readiness.
+                    </p>
+                    <div class="timeline-detail" id="timeline-detail-building">Long term, the goal is to move from beginner practice into focused 3D art and game development work that feels portfolio-ready and role-relevant.</div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact">
+        <div class="section-wrap">
+            <div class="section-head">
+                <span class="section-kicker">Contact</span>
+                <h2 class="section-title">Open to internships, collaborations, and opportunities to keep growing.</h2>
+            </div>
+            <div class="contact-grid">
+                <div class="contact-panel">
+                    <p>
+                        I am currently focused on building stronger project work in 3D art, game development, and interactive systems, and I am open to opportunities that support that growth.
+                    </p>
+                </div>
+                <div class="contact-panel">
+                    <ul class="contact-list">
+                        <li><span>Name</span>Gaurav Thakare</li>
+                        <li><span>Email</span><a href="mailto:gaurav06thakare@gmail.com">gaurav06thakare@gmail.com</a></li>
+                        <li><span>GitHub</span><a href="https://github.com/gaurav-O6" target="_blank" rel="noreferrer">github.com/gaurav-O6</a></li>
+                        <li><span>Project Repository</span><a href="https://github.com/gaurav-O6/SAMVAAD-" target="_blank" rel="noreferrer">SAMVAAD on GitHub</a></li>
+                        <li><span>Focus</span>3D Art, Game Development, Beginner AI Learning, Creative Technology</li>
+                        <li><span>Current Anchor Project</span>Final Year Project - SAMVAAD</li>
+                        <li><span>Status</span>Actively learning and building portfolio-quality work</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="footer">
+        <span class="footer-mark">Worldbuilding Console</span>
+        Crafted as a growth-focused profile inside Project SAMVAAD.
+    </div>
+</main>
+<script>
+const interactiveCards = document.querySelectorAll('[data-tilt]');
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const modeContent = {
+    focus: {
+        title: 'Current Focus',
+        copy: 'Building foundations in Blender, Unity, and beginner workflow thinking.',
+        status: 'Practicing 3D foundations, engine familiarity, and beginner coding through small but consistent builds.',
+        ramp: '1',
+        beacon: '0.95',
+        blocks: '0.85'
+    },
+    projects: {
+        title: 'Project Mode',
+        copy: 'Turning practice into visible project work, with SAMVAAD and learning projects shaping the journey.',
+        status: 'This mode highlights what has already been built, tested, and improved through iteration.',
+        ramp: '0.82',
+        beacon: '1.1',
+        blocks: '1'
+    },
+    future: {
+        title: 'Future Direction',
+        copy: 'Growing toward technical art, stronger game systems, and broader interactive media workflows.',
+        status: 'This mode points toward the longer path: stronger environments, better systems, and more polished portfolio work.',
+        ramp: '0.9',
+        beacon: '1',
+        blocks: '0.92'
+    }
+};
+
+if (!prefersReducedMotion) {
+    interactiveCards.forEach((card) => {
+        const strength = Number(card.dataset.tiltStrength || 8);
+
+        card.addEventListener('pointermove', (event) => {
+            const rect = card.getBoundingClientRect();
+            const px = (event.clientX - rect.left) / rect.width;
+            const py = (event.clientY - rect.top) / rect.height;
+            const rotateY = (px - 0.5) * strength;
+            const rotateX = (0.5 - py) * strength;
+
+            card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+        });
+
+        card.addEventListener('pointerleave', () => {
+            card.style.transform = '';
+        });
+    });
+
+    const stage = document.querySelector('[data-stage-light]');
+    if (stage) {
+        stage.addEventListener('pointermove', (event) => {
+            const rect = stage.getBoundingClientRect();
+            const x = ((event.clientX - rect.left) / rect.width) * 100;
+            const y = ((event.clientY - rect.top) / rect.height) * 100;
+            stage.style.setProperty('--mx', `${x}%`);
+            stage.style.setProperty('--my', `${y}%`);
+        });
+
+        stage.addEventListener('pointerleave', () => {
+            stage.style.setProperty('--mx', '50%');
+            stage.style.setProperty('--my', '50%');
+        });
+    }
+}
+
+const modeButtons = document.querySelectorAll('[data-mode]');
+const brandTagline = document.querySelector('.brand span');
+const stageTitle = document.querySelector('[data-stage-title]');
+const stageCopy = document.querySelector('[data-stage-copy]');
+const statusTitle = document.querySelector('[data-status-title]');
+const statusCopy = document.querySelector('[data-status-copy]');
+const ramp = document.querySelector('.level-ramp');
+const beacon = document.querySelector('.level-beacon');
+const blocks = document.querySelectorAll('.level-block');
+
+if (brandTagline) {
+    brandTagline.textContent = 'Aspiring 3D Artist | Game Developer | Creative Technologist';
+}
+
+modeButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+        const mode = modeContent[button.dataset.mode];
+        modeButtons.forEach((item) => item.classList.remove('is-active'));
+        button.classList.add('is-active');
+
+        if (stageTitle) stageTitle.textContent = mode.title;
+        if (stageCopy) stageCopy.textContent = mode.copy;
+        if (statusTitle) statusTitle.textContent = mode.title;
+        if (statusCopy) statusCopy.textContent = mode.status;
+        if (ramp) ramp.style.opacity = mode.ramp;
+        if (beacon) beacon.style.opacity = mode.beacon;
+        blocks.forEach((block) => {
+            block.style.opacity = mode.blocks;
+        });
+    });
+});
+
+const preview = {
+    badge: document.querySelector('[data-preview-badge]'),
+    title: document.querySelector('[data-preview-title]'),
+    copy: document.querySelector('[data-preview-copy]'),
+    meta: document.querySelector('[data-preview-meta]'),
+    points: document.querySelector('[data-preview-points]')
+};
+
+const activateProjectCard = (card) => {
+    document.querySelectorAll('[data-project-card]').forEach((item) => {
+        const isActive = item === card;
+        item.classList.toggle('is-selected', isActive);
+        item.setAttribute('aria-pressed', String(isActive));
+    });
+
+    if (preview.badge) preview.badge.textContent = card.dataset.projectBadge;
+    if (preview.title) preview.title.textContent = card.dataset.projectTitle;
+    if (preview.copy) preview.copy.textContent = card.dataset.projectCopy;
+
+    if (preview.meta) {
+        preview.meta.innerHTML = '';
+        card.dataset.projectMeta.split('|').forEach((tag) => {
+            const span = document.createElement('span');
+            span.textContent = tag;
+            preview.meta.appendChild(span);
+        });
+    }
+
+    if (preview.points) {
+        preview.points.innerHTML = '';
+        card.dataset.projectPoints.split('|').forEach((point) => {
+            const li = document.createElement('li');
+            li.textContent = point;
+            preview.points.appendChild(li);
+        });
+    }
+};
+
+const bindInteractiveCard = (element, onActivate) => {
+    element.addEventListener('click', () => {
+        onActivate(element);
+    });
+
+    element.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onActivate(element);
+        }
+    });
+};
+
+document.querySelectorAll('[data-project-card]').forEach((card) => {
+    bindInteractiveCard(card, activateProjectCard);
+});
+
+const toggleTimelineCard = (card) => {
+    const willOpen = !card.classList.contains('is-open');
+
+    document.querySelectorAll('.timeline-card').forEach((item) => {
+        const isOpen = willOpen && item === card;
+        item.classList.toggle('is-open', isOpen);
+        item.setAttribute('aria-expanded', String(isOpen));
+    });
+};
+
+document.querySelectorAll('.timeline-card').forEach((card) => {
+    bindInteractiveCard(card, toggleTimelineCard);
+});
+</script>
+</body>
+</html>
+
