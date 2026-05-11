@@ -549,6 +549,16 @@ function titleCaseWords(value) {
 
 function mergeCommonGestures(extraGestures = []) {
     const merged = new Map();
+    const preferredOrder = [
+        'hello', 'welcome', 'morning',
+        'please', 'thankyou', 'sorry',
+        'yes', 'no',
+        'help', 'friend', 'name',
+        'what', 'when', 'who',
+        'good', 'bad',
+        'wait', 'stop', 'finish'
+    ];
+    const preferredIndex = new Map(preferredOrder.map((key, idx) => [key, idx]));
 
     [...SIGN_COMMON, ...extraGestures].forEach(item => {
         if (!item || !item.key) return;
@@ -559,7 +569,12 @@ function mergeCommonGestures(extraGestures = []) {
     });
 
     SIGN_DATA.common = Array.from(merged.values())
-        .sort((a, b) => a.label.localeCompare(b.label));
+        .sort((a, b) => {
+            const aPriority = preferredIndex.has(a.key) ? preferredIndex.get(a.key) : Number.MAX_SAFE_INTEGER;
+            const bPriority = preferredIndex.has(b.key) ? preferredIndex.get(b.key) : Number.MAX_SAFE_INTEGER;
+            if (aPriority !== bPriority) return aPriority - bPriority;
+            return a.label.localeCompare(b.label);
+        });
 }
 
 async function loadCommonGestures() {

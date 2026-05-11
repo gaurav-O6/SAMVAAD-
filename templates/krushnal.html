@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Krushnal Mahajan | Resume</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body {
+    margin: 0;
+    font-family: "Inter", sans-serif;
+    background: #0f1724;
+    color: #e8eef8;
+}
+
+.container {
+    width: min(1040px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 28px 0 40px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    letter-spacing: 0.08em;
+}
+
+nav {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+nav a {
+    color: #9fb0c9;
+    text-decoration: none;
+    font-size: 0.92rem;
+}
+
+.hero,
+.section,
+.card,
+.project {
+    background: #152033;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-radius: 18px;
+}
+
+.hero {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 18px;
+    margin-top: 24px;
+    padding: 24px;
+}
+
+.hero h2 {
+    margin: 0 0 10px;
+    font-size: 2.2rem;
+}
+
+.subtitle {
+    margin: 0 0 14px;
+    color: #8fc4ff;
+    font-weight: 600;
+}
+
+.hero p,
+.card p,
+.project p,
+.section p,
+.section li {
+    color: #bfd0e3;
+    line-height: 1.7;
+}
+
+.buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.buttons a {
+    text-decoration: none;
+}
+
+.btn {
+    display: inline-block;
+    padding: 11px 18px;
+    border-radius: 999px;
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+.btn-primary {
+    background: #8fc4ff;
+    color: #0f1724;
+}
+
+.btn-secondary {
+    border: 1px solid #8fc4ff;
+    color: #8fc4ff;
+}
+
+.tags {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.tags span {
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #1b2940;
+    color: #d6e4f5;
+    font-size: 0.84rem;
+}
+
+.hero-right {
+    display: grid;
+    gap: 12px;
+}
+
+.card {
+    padding: 18px;
+}
+
+.card h3,
+.section h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.section {
+    margin-top: 22px;
+    padding: 24px;
+}
+
+.section h2 {
+    margin: 0 0 18px;
+    font-size: 1.5rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+.skill-box,
+.info-box {
+    padding: 18px;
+    border-radius: 16px;
+    background: #1a2740;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.project {
+    padding: 18px;
+}
+
+.project + .project {
+    margin-top: 14px;
+}
+
+.contact {
+    display: grid;
+    gap: 10px;
+}
+
+.contact p {
+    margin: 0;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: #1a2740;
+}
+
+@media (max-width: 860px) {
+    .hero {
+        grid-template-columns: 1fr;
+    }
+
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>KRUSHNAL MAHAJAN</h1>
+        <nav>
+            <a href="#about">About</a>
+            <a href="#skills">Skills</a>
+            <a href="#projects">Projects</a>
+            <a href="#contact">Contact</a>
+        </nav>
+    </header>
+
+    <section class="hero" id="about">
+        <div>
+            <h2>Krushnal Mahajan</h2>
+            <p class="subtitle">Data Scientist | Data Analyst</p>
+            <p>
+                Results-driven Data Scientist and Data Analyst with strong expertise in data modeling,
+                statistical analysis, and machine learning. Skilled in extracting insights from complex
+                datasets to support business decisions.
+            </p>
+
+            <div class="buttons">
+                <a class="btn btn-primary" href="#projects">View Projects</a>
+                <a class="btn btn-secondary" href="#contact">Contact Me</a>
+            </div>
+
+            <div class="tags">
+                <span>Python</span>
+                <span>SQL</span>
+                <span>Machine Learning</span>
+                <span>Power BI</span>
+                <span>Tableau</span>
+                <span>Data Analysis</span>
+            </div>
+        </div>
+
+        <div class="hero-right">
+            <div class="card">
+                <h3>Current Focus</h3>
+                <p>Predictive analytics, machine learning models, and dashboard development.</p>
+            </div>
+            <div class="card">
+                <h3>Status</h3>
+                <p>Actively learning and building portfolio-quality data science projects.</p>
+            </div>
+            <div class="card">
+                <h3>Education</h3>
+                <p>B.E Computer Science<br>SPPU (2022-2026)</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="skills">
+        <h2>Key Skills</h2>
+        <div class="grid">
+            <div class="skill-box"><strong>Programming:</strong> Python, SQL</div>
+            <div class="skill-box"><strong>Data Analysis:</strong> Pandas, NumPy, Excel</div>
+            <div class="skill-box"><strong>Machine Learning:</strong> Scikit-learn, TensorFlow</div>
+            <div class="skill-box"><strong>Visualization:</strong> Power BI, Tableau, Matplotlib</div>
+            <div class="skill-box"><strong>Database:</strong> MySQL</div>
+            <div class="skill-box"><strong>Big Data:</strong> Hadoop, Spark (Basic)</div>
+            <div class="skill-box">Statistical Analysis &amp; Hypothesis Testing</div>
+            <div class="skill-box">Data Cleaning &amp; Feature Engineering</div>
+        </div>
+    </section>
+
+    <section class="section" id="projects">
+        <h2>Projects</h2>
+        <div class="project">
+            <h3>Sales Prediction Model</h3>
+            <p>Developed regression-based ML model using historical data.</p>
+            <p>Improved forecasting accuracy and business insights.</p>
+        </div>
+        <div class="project">
+            <h3>Customer Churn Analysis</h3>
+            <p>Identified key factors affecting customer retention.</p>
+            <p>Built classification model to predict churn probability.</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>Education &amp; Certifications</h2>
+        <div class="grid">
+            <div class="info-box">
+                <strong>Bachelor of Engineering (Computer Science)</strong><br>
+                Savitribai Phule Pune University<br>
+                2022-2026 (Pursuing)
+                <br><br>
+                <strong>Higher Secondary (12th)</strong><br>
+                Sardar G. G. Junior College, Raver<br>
+                Completed in 2022
+                <br><br>
+                <strong>Secondary (10th)</strong><br>
+                Modern English School, Raver<br>
+                Completed in 2020
+            </div>
+            <div class="info-box">
+                <strong>Data Science Certification - Coursera</strong><br>
+                Learned data analysis, machine learning basics, and Python tools.
+                <br><br>
+                <strong>Data Visualization Training - Anudip Foundation</strong><br>
+                Gained hands-on experience in Power BI and Tableau.
+                <br><br>
+                <strong>Additional Learning</strong><br>
+                Practicing data cleaning, feature engineering, and model building.
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="contact">
+        <h2>Contact</h2>
+        <div class="contact">
+            <p>Pune, Maharashtra, India</p>
+            <p>+91-8007248465</p>
+            <p>mahajankrushnal95@email.com</p>
+            <p>linkedin.com/in/Krushnal-Mahajan</p>
+        </div>
+    </section>
+</div>
+</body>
+</html>

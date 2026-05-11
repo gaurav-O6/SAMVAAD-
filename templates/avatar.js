@@ -21,6 +21,8 @@ window.SAMVAADAvatar = (function () {
     let _currentAction = null;
     let _idleAction    = null;
     let _playbackToken = 0;
+    let _introToken    = 0;
+    const _introTimers = new Set();
 
     let _onSignChange  = null;
     let _animFolder    = "animations/";
@@ -45,12 +47,21 @@ window.SAMVAADAvatar = (function () {
         SPACE       : "space",        // between-word gap gesture
     };
 
+    const TRANSITION_CLIPS = {
+        [T.IDLE]:        { clipBase: "idle", reverse: false },
+        [T.RAISE_RIGHT]: { clipBase: "right_hand_raise", reverse: false },
+        [T.LOWER_RIGHT]: { clipBase: "right_hand_raise", reverse: true, fallbackBase: "Right_hand_lower" },
+        [T.RAISE_LEFT]:  { clipBase: "raise_left", reverse: false },
+        [T.LOWER_LEFT]:  { clipBase: "raise_left", reverse: true, fallbackBase: "left_hand_lower" },
+        [T.SPACE]:       { clipBase: "space", reverse: false },
+    };
+
     // All transition keys as a Set for fast lookup
     const TRANSITION_KEYS = new Set(Object.values(T));
 
     const CROSSFADE_DURATION = 0.15;  // seconds
     const MIN_SIGN_MS        = 600;   // minimum ms any sign is shown
-    const IDLE_INTRO_MS      = 2000;  // how long idle plays before the intro sequence
+    const IDLE_INTRO_MS      = 3000;  // how long idle plays before the intro sequence
     const CLIP_SETTLE_MS     = 360;   // let end-pose breathe before the next clip
     const SIGN_BLEND_CLEANUP_MS = Math.round(CROSSFADE_DURATION * 1000) + 20;
     const IDLE_SPEED         = 1.0;
@@ -122,6 +133,21 @@ window.SAMVAADAvatar = (function () {
         if (_renderer?.domElement) {
             _renderer.domElement.style.visibility = visible ? "visible" : "hidden";
         }
+    }
+
+    function _clearIntroTimers() {
+        for (const timerId of _introTimers) clearTimeout(timerId);
+        _introTimers.clear();
+    }
+
+    function _scheduleIntroTimer(callback, delayMs, token) {
+        const timerId = setTimeout(() => {
+            _introTimers.delete(timerId);
+            if (token !== _introToken) return;
+            callback();
+        }, delayMs);
+        _introTimers.add(timerId);
+        return timerId;
     }
 
     function _revealAvatarIfReady() {
@@ -407,7 +433,7 @@ window.SAMVAADAvatar = (function () {
     }
 
     // ── Crossfade to a clip ───────────────────────────────────────────────────
-    function _crossfadeToClip(clip, label, onDone) {
+    function _crossfadeToClip(clip, label, onDone, options = {}) {
         if (_onSignChange) _onSignChange(label || "");
 
         if (!clip || !_mixer || !_model) {
@@ -415,18 +441,39 @@ window.SAMVAADAvatar = (function () {
             return;
         }
 
+        const reverse = Boolean(options.reverse);
+        const hardStartFromIdle = Boolean(options.hardStartFromIdle);
+        const resetMixer = Boolean(options.resetMixer);
+        const normalizedLabel = String(label || "").trim().toLowerCase();
+        const playbackSpeed = normalizedLabel === "welcome" ? 1.0 : _speed;
+
+        if (resetMixer && _mixer) {
+            _mixer.stopAllAction();
+            _currentAction = null;
+            _idleAction = null;
+        }
+
         const incoming = _mixer.clipAction(clip);
+        incoming.stop();
         incoming.reset();
         incoming.enabled           = true;
+        incoming.paused            = false;
         incoming.setLoop(THREE.LoopOnce, 1);
         incoming.clampWhenFinished = true;
-        incoming.timeScale         = _speed;
+        incoming.timeScale         = reverse ? -playbackSpeed : playbackSpeed;
+        incoming.setEffectiveTimeScale(reverse ? -playbackSpeed : playbackSpeed);
+        incoming.setEffectiveWeight(1);
+        incoming.time              = reverse ? Math.max(clip.duration - 0.001, 0) : 0;
 
         const prev = _currentAction;
         const prevIsIdle = (prev === _idleAction);
 
         if (prev && prev !== incoming) {
-            if (prevIsIdle) {
+            if (prevIsIdle && hardStartFromIdle) {
+                prev.stop();
+                prev.enabled = false;
+                if (_idleAction === prev) _idleAction = null;
+            } else if (prevIsIdle) {
                 // Idle is LoopRepeat — we must crossFadeTo (not From) so we
                 // control the direction, then hard-stop idle after the blend
                 // window so it cannot keep influencing the mixer.
@@ -468,7 +515,7 @@ window.SAMVAADAvatar = (function () {
         function onFinished(e) { if (e.action === incoming) finish(); }
         _mixer.addEventListener("finished", onFinished);
 
-        const durMs = (clip.duration * 1000) / Math.max(_speed, 0.1);
+        const durMs = (clip.duration * 1000) / Math.max(playbackSpeed, 0.1);
         setTimeout(finish, Math.max(durMs, MIN_SIGN_MS));
     }
 
@@ -487,6 +534,10 @@ window.SAMVAADAvatar = (function () {
         const lower = String(word || "").trim().toLowerCase();
         if (!lower) return "";
         return NUMBER_WORD_MAP[lower] || lower;
+    }
+
+    function _isSingleAlphabetToken(token) {
+        return /^[a-z]$/i.test(String(token || "").trim());
     }
 
     function _tokenizeInput(text) {
@@ -560,8 +611,8 @@ window.SAMVAADAvatar = (function () {
     //    one run (one raise, one lower).
     //  • When a fingerspelled run ends and a whole-word sign follows (or vice
     //    versa), the hand is lowered first.
-    //  • A SPACE marker is inserted between every word (gracefully skipped at
-    //    playback time if space.fbx / space.glb does not exist yet).
+    //  • A SPACE marker is only inserted between consecutive fingerspelled
+    //    words so separate spelled words do not visually merge together.
     //
     async function _buildQueue(words) {
 
@@ -573,6 +624,14 @@ window.SAMVAADAvatar = (function () {
         for (let wi = 0; wi < words.length; wi++) {
             const word  = words[wi];
             const lower = _normalizeWordToken(word);
+
+            // Treat a standalone typed letter as fingerspelling input even
+            // though the matching animation asset exists by filename.
+            if (_isSingleAlphabetToken(lower)) {
+                resolved.push({ type: "letters", letters: [lower.toUpperCase()], left: false });
+                continue;
+            }
+
             const exists = await _fileExists(lower);
 
             if (exists) {
@@ -592,10 +651,6 @@ window.SAMVAADAvatar = (function () {
                 }
             }
 
-            // Insert a SPACE marker between words (not after the last word)
-            if (wi < words.length - 1) {
-                resolved.push({ type: "space" });
-            }
         }
 
         if (resolved.length === 0) return [];
@@ -604,14 +659,9 @@ window.SAMVAADAvatar = (function () {
         const queue = [];
         let activeHand = null; // "right" | "left" | null
 
-        for (const item of resolved) {
-
-            if (item.type === "space") {
-                // Space goes in as-is; if activeHand is raised we DON'T lower yet
-                // (the space gesture is performed with whatever hand is active)
-                queue.push(T.SPACE);
-                continue;
-            }
+        for (let i = 0; i < resolved.length; i++) {
+            const item = resolved[i];
+            const nextItem = resolved[i + 1] || null;
 
             if (item.type === "word") {
                 // Whole-word animation — lower any raised hand first, then play
@@ -637,6 +687,14 @@ window.SAMVAADAvatar = (function () {
                 }
                 // Push all letters (hand stays raised between them)
                 for (const letter of item.letters) queue.push(letter);
+
+                // Only add the recorded SPACE gesture between separate
+                // fingerspelled words. Whole-word signs can flow directly.
+                if (nextItem?.type === "letters") {
+                    if (activeHand === "right") { queue.push(T.LOWER_RIGHT); activeHand = null; }
+                    if (activeHand === "left")  { queue.push(T.LOWER_LEFT);  activeHand = null; }
+                    queue.push(T.SPACE);
+                }
                 continue;
             }
         }
@@ -649,7 +707,70 @@ window.SAMVAADAvatar = (function () {
         return queue;
     }
 
+    async function _buildIntroQueue(words) {
+        const resolved = [];
+
+        for (let wi = 0; wi < words.length; wi++) {
+            const lower = _normalizeWordToken(words[wi]);
+            if (!lower) continue;
+
+            if (_isSingleAlphabetToken(lower)) {
+                resolved.push({ type: "letters", letters: [lower.toUpperCase()] });
+            } else {
+                const exists = await _fileExists(lower);
+                if (exists) {
+                    resolved.push({ type: "word", key: lower.length === 1 ? lower.toUpperCase() : lower });
+                } else {
+                    const letters = [];
+                    for (const ch of lower) {
+                        if (/[a-z]/.test(ch)) letters.push(ch.toUpperCase());
+                    }
+                    if (letters.length > 0) resolved.push({ type: "letters", letters });
+                }
+            }
+        }
+
+        const queue = [];
+        for (let i = 0; i < resolved.length; i++) {
+            const item = resolved[i];
+            const nextItem = resolved[i + 1] || null;
+
+            if (item.type === "word") {
+                queue.push(item.key);
+            } else if (item.type === "letters") {
+                for (const letter of item.letters) queue.push(letter);
+                if (nextItem?.type === "letters") queue.push(T.SPACE);
+            }
+        }
+
+        console.log("Avatar intro queue:", queue);
+        return queue;
+    }
+
     // ── Queue player ──────────────────────────────────────────────────────────
+    async function _resolvePlaybackConfig(signKey) {
+        const transition = TRANSITION_CLIPS[signKey];
+        if (!transition) {
+            return { clipBase: signKey, reverse: false };
+        }
+
+        if (!transition.fallbackBase) {
+            return transition;
+        }
+
+        const primaryExists = await _fileExists(transition.clipBase);
+        if (primaryExists) {
+            return { clipBase: transition.clipBase, reverse: transition.reverse };
+        }
+
+        const fallbackExists = await _fileExists(transition.fallbackBase);
+        if (fallbackExists) {
+            return { clipBase: transition.fallbackBase, reverse: false };
+        }
+
+        return { clipBase: transition.clipBase, reverse: transition.reverse };
+    }
+
     function _playNext(token = _playbackToken) {
         if (token !== _playbackToken) return;
 
@@ -663,14 +784,24 @@ window.SAMVAADAvatar = (function () {
         _isPlaying    = true;
         const signKey = _queue.shift();
         const isTransition = TRANSITION_KEYS.has(signKey);
+        const displayLabel = signKey === T.SPACE ? "SPACE" : (isTransition ? null : signKey);
         console.log(`Avatar: next clip "${signKey}"${isTransition ? " (transition)" : ""}`);
 
-        _fetchClip(signKey, clip => {
+        _resolvePlaybackConfig(signKey).then(playback => {
             if (token !== _playbackToken) return;
-            if (!clip) {
-                console.warn(`Avatar: skipping "${signKey}" because no clip was loaded`);
-            }
-            _crossfadeToClip(clip, isTransition ? null : signKey, () => _playNext(token));
+
+            _fetchClip(playback.clipBase, clip => {
+                if (token !== _playbackToken) return;
+                if (!clip) {
+                    console.warn(`Avatar: skipping "${signKey}" because no clip was loaded`);
+                }
+                _crossfadeToClip(
+                    clip,
+                    displayLabel,
+                    () => _playNext(token),
+                    { reverse: playback.reverse }
+                );
+            });
         });
     }
 
@@ -769,39 +900,64 @@ window.SAMVAADAvatar = (function () {
      */
     api.playIntro = function (sequence) {
         if (!sequence || sequence.length === 0) return;
+        _introToken += 1;
+        _clearIntroTimers();
+        _playbackToken += 1;
+        _queue = [];
+        _isPlaying = false;
+        const token = _introToken;
 
         function runKeys(keys, onAllDone) {
+            if (token !== _introToken) return;
             if (keys.length === 0) { onAllDone(); return; }
             const key = keys.shift();
             const isTrans = TRANSITION_KEYS.has(key);
-            _fetchClip(key, clip => {
-                _crossfadeToClip(clip, isTrans ? null : key, () => runKeys(keys, onAllDone));
+            _resolvePlaybackConfig(key).then(playback => {
+                if (token !== _introToken) return;
+                _fetchClip(playback.clipBase, clip => {
+                    if (token !== _introToken) return;
+                    _crossfadeToClip(
+                        clip,
+                        isTrans ? null : key,
+                        () => runKeys(keys, onAllDone),
+                        {
+                            reverse: playback.reverse,
+                            hardStartFromIdle: isTrans ? false : (key === "hello"),
+                            resetMixer: isTrans ? false : (key === "hello"),
+                        }
+                    );
+                });
             });
         }
 
         async function start() {
+            if (token !== _introToken) return;
             console.log("Avatar intro: building queue...");
-            const builtQueue = await _buildQueue(sequence);
+            const builtQueue = await _buildIntroQueue(sequence);
             console.log("Avatar intro: queue ready:", builtQueue);
 
+            if (token !== _introToken) return;
             if (!builtQueue || builtQueue.length === 0) {
                 console.warn("Avatar intro: empty queue, retry 2 s");
-                setTimeout(start, 2000);
+                _scheduleIntroTimer(start, 2000, token);
                 return;
             }
 
             const fullIdleMs = await _getClipDurationMs(T.IDLE, 3000);
+            if (token !== _introToken) return;
 
             function cycle() {
+                if (token !== _introToken) return;
                 console.log("Avatar intro: short idle", IDLE_INTRO_MS, "ms");
                 _playIdle();
-                setTimeout(() => {
+                _scheduleIntroTimer(() => {
                     runKeys([...builtQueue], () => {
+                        if (token !== _introToken) return;
                         console.log("Avatar intro: full idle", fullIdleMs, "ms");
                         _playIdle();
-                        setTimeout(cycle, fullIdleMs);
+                        _scheduleIntroTimer(cycle, fullIdleMs, token);
                     });
-                }, IDLE_INTRO_MS);
+                }, IDLE_INTRO_MS, token);
             }
 
             cycle();
@@ -815,7 +971,7 @@ window.SAMVAADAvatar = (function () {
      * Automatically checks server for whole-word files before fingerspelling.
      * Wraps fingerspelled runs with raise/lower hand transitions.
      * Whole-word signs are played directly without raise/lower.
-     * Space gesture inserted between words.
+     * Space gesture inserted only between consecutive fingerspelled words.
      * Returns to idle when done.
      *
      * @param {string} text — the text to sign
@@ -859,6 +1015,8 @@ window.SAMVAADAvatar = (function () {
      * Stop all playback and return to idle.
      */
     api.stop = function () {
+        _introToken += 1;
+        _clearIntroTimers();
         _playbackToken += 1;
         _queue     = [];
         _isPlaying = false;

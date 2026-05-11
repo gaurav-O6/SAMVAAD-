@@ -1,5 +1,7 @@
 # SAMVAAD
 
+[System architecture diagram](</D:/SAMVAAD/docs/system-architecture.md>)
+
 SAMVAAD is a multimodal assistive communication system that brings together sign language, text, speech, and Braille workflows in one project. It is built as an accessibility-focused final year project for bridging communication gaps across hearing, speech, and visual impairments.
 
 ## What It Does

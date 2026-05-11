@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shreya Choure | Resume</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body {
+    margin: 0;
+    font-family: "Inter", sans-serif;
+    background: #12171d;
+    color: #edf2f7;
+}
+
+.container {
+    width: min(1040px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 28px 0 40px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.35rem;
+    letter-spacing: 0.08em;
+}
+
+nav {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+nav a {
+    color: #b7c6d8;
+    text-decoration: none;
+    font-size: 0.92rem;
+}
+
+.hero,
+.section,
+.card,
+.entry {
+    background: #1b232d;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-radius: 18px;
+}
+
+.hero {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 18px;
+    margin-top: 24px;
+    padding: 24px;
+}
+
+.hero h2 {
+    margin: 0 0 10px;
+    font-size: 2.2rem;
+}
+
+.subtitle {
+    margin: 0 0 14px;
+    color: #8dd3c7;
+    font-weight: 600;
+}
+
+.hero p,
+.card p,
+.entry p,
+.entry li {
+    color: #cfdae7;
+    line-height: 1.7;
+}
+
+.buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.buttons a {
+    text-decoration: none;
+}
+
+.btn {
+    display: inline-block;
+    padding: 11px 18px;
+    border-radius: 999px;
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+.btn-primary {
+    background: #8dd3c7;
+    color: #122027;
+}
+
+.btn-secondary {
+    border: 1px solid #8dd3c7;
+    color: #8dd3c7;
+}
+
+.tags {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.tags span {
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #24303c;
+    color: #e1ebf4;
+    font-size: 0.84rem;
+}
+
+.hero-right {
+    display: grid;
+    gap: 12px;
+}
+
+.card {
+    padding: 18px;
+}
+
+.card h3,
+.section h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.section {
+    margin-top: 22px;
+    padding: 24px;
+}
+
+.section h2 {
+    margin: 0 0 18px;
+    font-size: 1.5rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+.entry {
+    padding: 18px;
+}
+
+.entry ul {
+    margin: 12px 0 0;
+    padding-left: 18px;
+}
+
+.entry li + li {
+    margin-top: 8px;
+}
+
+.contact-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+}
+
+.contact-list li {
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: #24303c;
+}
+
+.contact-list span {
+    display: block;
+    margin-bottom: 4px;
+    color: #8dd3c7;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+@media (max-width: 860px) {
+    .hero {
+        grid-template-columns: 1fr;
+    }
+
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>SHREYA CHOURE</h1>
+        <nav>
+            <a href="#about">About</a>
+            <a href="#skills">Skills</a>
+            <a href="#projects">Projects</a>
+            <a href="#contact">Contact</a>
+        </nav>
+    </header>
+
+    <section class="hero" id="about">
+        <div>
+            <h2>Shreya Choure</h2>
+            <p class="subtitle">Data Analyst - Software Developer</p>
+            <p>
+                Final-year BE Computer Engineering student at Alard College of Engineering with strong
+                interest in Data Analytics and business intelligence. Skilled in Excel, SQL, Python,
+                and Power BI for data cleaning, analysis, and visualization. Recently completed Data
+                Analytics certification and looking for an entry-level Data Analyst role.
+            </p>
+
+            <div class="buttons">
+                <a class="btn btn-primary" href="#projects">View Projects</a>
+                <a class="btn btn-secondary" href="#contact">Contact Me</a>
+            </div>
+
+            <div class="tags">
+                <span>Python</span>
+                <span>SQL</span>
+                <span>Power BI</span>
+                <span>Excel</span>
+                <span>MySQL</span>
+                <span>Data Visualization</span>
+            </div>
+        </div>
+
+        <div class="hero-right">
+            <div class="card">
+                <h3>Education</h3>
+                <p>Bachelor of Engineering (Computer Engineering)<br>Alard College of Engineering, Pune<br>2022-2026 | CGPA: 8.95/10</p>
+            </div>
+            <div class="card">
+                <h3>Experience</h3>
+                <p>Data Visualization Intern at Wisdom Sprout with hands-on work in dashboards, reporting, and data analysis.</p>
+            </div>
+            <div class="card">
+                <h3>Strengths</h3>
+                <p>Analytical thinking, problem solving, communication, teamwork, and quick learning.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="skills">
+        <h2>Technical Skills</h2>
+        <div class="grid">
+            <div class="entry"><strong>Programming Languages:</strong> Python, SQL, HTML, CSS, JavaScript</div>
+            <div class="entry"><strong>Data Analytics Tools:</strong> Power BI, Excel</div>
+            <div class="entry"><strong>Libraries:</strong> Pandas, NumPy, Matplotlib</div>
+            <div class="entry"><strong>Machine Learning:</strong> YOLO, Scikit-learn</div>
+            <div class="entry"><strong>Web Development:</strong> HTML5, CSS3, Responsive Design</div>
+            <div class="entry"><strong>Database:</strong> MySQL</div>
+            <div class="entry"><strong>Tools:</strong> Jupyter Notebook, Git, GitHub</div>
+            <div class="entry"><strong>Concepts:</strong> Data Visualization, OOP, DBMS</div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>Education</h2>
+        <div class="grid">
+            <div class="entry">
+                <h3>Bachelor of Engineering (Computer Engineering)</h3>
+                <p>Alard College of Engineering, Pune</p>
+                <p>2022-2026 | CGPA: 8.95/10</p>
+            </div>
+            <div class="entry">
+                <h3>Higher Secondary Certificate (HSC)</h3>
+                <p>Science Stream</p>
+                <p>2020-2022 | Percentage: 60.50%</p>
+            </div>
+            <div class="entry">
+                <h3>Secondary School Certificate (SSC)</h3>
+                <p>2019-2020 | Percentage: 86.60%</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="projects">
+        <h2>Projects</h2>
+        <div class="grid">
+            <div class="entry">
+                <h3>SAMVAAD</h3>
+                <ul>
+                    <li>Worked on a computer vision based accessibility project using Python, OpenCV, and machine learning libraries.</li>
+                    <li>Used YOLO-based real-time sign language detection to improve communication accessibility.</li>
+                    <li>Contributed to an assistive platform designed to support inclusive interaction.</li>
+                </ul>
+            </div>
+            <div class="entry">
+                <h3>Responsive Travel Website</h3>
+                <ul>
+                    <li>Designed a responsive multi-page website using HTML and CSS.</li>
+                    <li>Created sections including home, destinations, hotels, activities, and contact page.</li>
+                </ul>
+            </div>
+            <div class="entry">
+                <h3>Data Analysis Dashboard</h3>
+                <ul>
+                    <li>Built a Power BI dashboard for data visualization and performance tracking.</li>
+                    <li>Used an Excel dataset to identify trends and insights.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>Experience</h2>
+        <div class="entry">
+            <h3>Data Visualization Intern</h3>
+            <p>Wisdom Sprout | 2024</p>
+            <ul>
+                <li>Built interactive Power BI dashboards to analyze business performance and key metrics.</li>
+                <li>Cleaned and transformed datasets using Excel and Python for accurate analysis.</li>
+                <li>Generated visual reports to support data-driven decision making.</li>
+                <li>Identified trends and patterns in data to provide actionable insights.</li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>Certifications</h2>
+        <div class="grid">
+            <div class="entry">
+                <ul>
+                    <li>Data Analytics Certification</li>
+                    <li>Power BI Certification</li>
+                    <li>Data Visualization Certification</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="contact">
+        <h2>Contact</h2>
+        <ul class="contact-list">
+            <li><span>Phone</span><a href="tel:+919960659184">9960659184</a></li>
+            <li><span>Email</span><a href="mailto:choureshreya82@gmail.com">choureshreya82@gmail.com</a></li>
+            <li><span>LinkedIn</span>LinkedIn</li>
+            <li><span>GitHub</span>GitHub</li>
+        </ul>
+    </section>
+</div>
+</body>
+</html>

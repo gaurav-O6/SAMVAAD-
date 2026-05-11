@@ -40,8 +40,11 @@ LEFT_HAND_GESTURES = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Y
 TRANSITION_ANIMATIONS = {
     "idle",
     "right_hand_raise",
+    "right_hand_lower",
     "lower_right",
     "raise_left",
+    "left_hand_raise",
+    "left_hand_lower",
     "lower_left",
     "space",
 }
@@ -106,6 +109,8 @@ def _discover_common_gesture_animations():
 
         normalized = base.strip().lower()
         if not normalized:
+            continue
+        if not re.fullmatch(r"[a-z_]+", normalized):
             continue
         if normalized in TRANSITION_ANIMATIONS:
             continue

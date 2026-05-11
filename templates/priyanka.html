@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Priyanka Narawade | Resume</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body {
+    margin: 0;
+    font-family: "Inter", sans-serif;
+    background: #171018;
+    color: #f4edf4;
+}
+
+.container {
+    width: min(1040px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 28px 0 40px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(196, 167, 196, 0.18);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.35rem;
+    letter-spacing: 0.08em;
+}
+
+nav {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+nav a {
+    color: #ceb8d0;
+    text-decoration: none;
+    font-size: 0.92rem;
+}
+
+.hero,
+.section,
+.card,
+.entry {
+    background: #241a26;
+    border: 1px solid rgba(196, 167, 196, 0.14);
+    border-radius: 18px;
+}
+
+.hero {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 18px;
+    margin-top: 24px;
+    padding: 24px;
+}
+
+.hero h2 {
+    margin: 0 0 10px;
+    font-size: 2.2rem;
+}
+
+.subtitle {
+    margin: 0 0 14px;
+    color: #f0a9ba;
+    font-weight: 600;
+}
+
+.hero p,
+.card p,
+.entry p,
+.entry li {
+    color: #dcc7de;
+    line-height: 1.7;
+}
+
+.buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.buttons a {
+    text-decoration: none;
+}
+
+.btn {
+    display: inline-block;
+    padding: 11px 18px;
+    border-radius: 999px;
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+.btn-primary {
+    background: #f0a9ba;
+    color: #1c121d;
+}
+
+.btn-secondary {
+    border: 1px solid #f0a9ba;
+    color: #f0a9ba;
+}
+
+.tags {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.tags span {
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #2d2030;
+    color: #f2e4f0;
+    font-size: 0.84rem;
+}
+
+.hero-right {
+    display: grid;
+    gap: 12px;
+}
+
+.card {
+    padding: 18px;
+}
+
+.card h3,
+.section h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.section {
+    margin-top: 22px;
+    padding: 24px;
+}
+
+.section h2 {
+    margin: 0 0 18px;
+    font-size: 1.5rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+.entry {
+    padding: 18px;
+}
+
+.entry ul {
+    margin: 12px 0 0;
+    padding-left: 18px;
+}
+
+.entry li + li {
+    margin-top: 8px;
+}
+
+.contact-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+}
+
+.contact-list li {
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: #2d2030;
+}
+
+.contact-list span {
+    display: block;
+    margin-bottom: 4px;
+    color: #f0a9ba;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+@media (max-width: 860px) {
+    .hero {
+        grid-template-columns: 1fr;
+    }
+
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>PRIYANKA NARAWADE</h1>
+        <nav>
+            <a href="#about">About</a>
+            <a href="#skills">Skills</a>
+            <a href="#projects">Projects</a>
+            <a href="#contact">Contact</a>
+        </nav>
+    </header>
+
+    <section class="hero" id="about">
+        <div>
+            <h2>Priyanka Narawade</h2>
+            <p class="subtitle">Computer Science Engineering Student</p>
+            <p>
+                A motivated Computer Science Engineering final-year student seeking an entry-level
+                position to apply programming knowledge, problem-solving skills, and a passion for
+                software development in a professional environment.
+            </p>
+
+            <div class="buttons">
+                <a class="btn btn-primary" href="#projects">View Projects</a>
+                <a class="btn btn-secondary" href="#contact">Contact Me</a>
+            </div>
+
+            <div class="tags">
+                <span>C</span>
+                <span>C++</span>
+                <span>Java</span>
+                <span>Python</span>
+                <span>HTML</span>
+                <span>CSS</span>
+                <span>JavaScript</span>
+                <span>MySQL</span>
+            </div>
+        </div>
+
+        <div class="hero-right">
+            <div class="card">
+                <h3>Education</h3>
+                <p>Bachelor of Engineering (Computer Science)<br>Alard Collage Of Engineering And Management, Pune<br>2023-2026 | CGPA: 8.7</p>
+            </div>
+            <div class="card">
+                <h3>Internship</h3>
+                <p>Data Analytics Intern at ANUDIP FOUNDATION with exposure to Python, SQL, Power BI, and reporting.</p>
+            </div>
+            <div class="card">
+                <h3>Objective</h3>
+                <p>Looking for an entry-level role to grow in software development through practical work and team learning.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="skills">
+        <h2>Technical Skills</h2>
+        <div class="grid">
+            <div class="entry"><strong>Programming Languages:</strong> C, C++, Java, Python</div>
+            <div class="entry"><strong>Web Technologies:</strong> HTML, CSS, JavaScript</div>
+            <div class="entry"><strong>Database:</strong> MySQL</div>
+            <div class="entry"><strong>Tools:</strong> Git, VS Code</div>
+            <div class="entry"><strong>Operating Systems:</strong> Windows, Linux</div>
+        </div>
+    </section>
+
+    <section class="section" id="projects">
+        <h2>Projects</h2>
+        <div class="grid">
+            <div class="entry">
+                <h3>Sign and Multimodal Voice Assistive Access &amp; Dialogue</h3>
+                <ul>
+                    <li>Developed a web-based application using HTML, CSS, JavaScript, and MySQL.</li>
+                    <li>SAMVAAD is an AI-powered accessibility platform designed to bridge communication gaps for users with hearing, speech, and visual impairments.</li>
+                </ul>
+            </div>
+            <div class="entry">
+                <h3>Online Quiz Application</h3>
+                <ul>
+                    <li>Created an interactive quiz platform using JavaScript.</li>
+                    <li>Implemented score calculation and result display.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>Internship / Training</h2>
+        <div class="entry">
+            <h3>Data Analytics Intern</h3>
+            <p>ANUDIP FOUNDATION (June 2024 - August 2024)</p>
+            <ul>
+                <li>Collected, cleaned, and analyzed datasets to generate actionable insights.</li>
+                <li>Used Python and SQL for data manipulation and analysis.</li>
+                <li>Built interactive dashboards using Power BI to visualize key metrics.</li>
+                <li>Prepared reports and presented findings to the team.</li>
+                <li>Wrote unit tests to validate data processing logic.</li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>Certifications &amp; Personal Details</h2>
+        <div class="grid">
+            <div class="entry">
+                <h3>Certifications</h3>
+                <ul>
+                    <li>Python Programming - Coursera</li>
+                    <li>Web Development Basics - Udemy</li>
+                </ul>
+            </div>
+            <div class="entry">
+                <h3>Personal Details</h3>
+                <ul>
+                    <li>Date of Birth: 26 July 2002</li>
+                    <li>Languages Known: English, Hindi</li>
+                    <li>Address: Pune, Maharashtra, India</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="contact">
+        <h2>Contact</h2>
+        <ul class="contact-list">
+            <li><span>Email</span><a href="mailto:priyankanarawade2002@email.com">priyankanarawade2002@email.com</a></li>
+            <li><span>Phone</span><a href="tel:+918793220495">+91 8793220495</a></li>
+            <li><span>LinkedIn</span><a href="https://linkedin.com/in/priyanka-narawade" target="_blank" rel="noreferrer">linkedin.com/in/priyanka-narawade</a></li>
+            <li><span>Declaration</span>I hereby declare that the above information is true and correct to the best of my knowledge.</li>
+        </ul>
+    </section>
+</div>
+</body>
+</html>
