@@ -531,7 +531,10 @@ window.SAMVAADAvatar = (function () {
     }
 
     function _normalizeWordToken(word) {
-        const lower = String(word || "").trim().toLowerCase();
+        const lower = String(word || "")
+            .trim()
+            .toLowerCase()
+            .replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, "");
         if (!lower) return "";
         return NUMBER_WORD_MAP[lower] || lower;
     }
